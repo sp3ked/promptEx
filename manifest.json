@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "PromptVault",
+  "version": "1.0",
+  "description": "Save, manage, and reuse prompts for AI chat platforms with attached context",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "clipboardWrite",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*",
+    "https://grok.x.ai/*"
+  ],
+  "action": {
+    "default_title": "PromptVault",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [{
+    "matches": [
+      "https://chat.openai.com/*",
+      "https://chatgpt.com/*",
+      "https://claude.ai/*",
+      "https://grok.x.ai/*"
+    ],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }]
+} 

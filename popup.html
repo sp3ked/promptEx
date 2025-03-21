@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptVault</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      width: 350px;
+      height: 500px;
+      margin: 0;
+      padding: 10px;
+      overflow-y: auto;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+    
+    h1, h2, h3 {
+      margin-top: 0;
+      color: #1a73e8;
+    }
+    
+    button {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    
+    button:hover {
+      background-color: #1557b0;
+    }
+    
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    
+    .prompt-list {
+      margin-top: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .prompt-item {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      background-color: white;
+      cursor: pointer;
+    }
+    
+    .prompt-item:hover {
+      background-color: #f0f5ff;
+    }
+    
+    .tags {
+      margin-top: 5px;
+    }
+    
+    .tag {
+      background-color: #e1f5fe;
+      color: #0277bd;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+    }
+    
+    .modal-content {
+      position: relative;
+      background-color: white;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .file-attachment {
+      display: flex;
+      align-items: center;
+      background-color: #f1f3f4;
+      padding: 5px 10px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+    
+    .file-name {
+      flex-grow: 1;
+      margin-right: 10px;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #323232;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>PromptVault</h2>
+  
+  <div>
+    <button id="newPromptBtn">New Prompt</button>
+    <input type="text" id="searchPrompts" placeholder="Search prompts...">
+  </div>
+  
+  <div class="prompt-list" id="promptList">
+    <!-- Prompt items will be added here dynamically -->
+  </div>
+  
+  <!-- Create/Edit Prompt Modal -->
+  <div id="promptModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closePromptModal">&times;</span>
+      <h3 id="modalTitle">Create New Prompt</h3>
+      
+      <label for="promptTitle">Title:</label>
+      <input type="text" id="promptTitle" placeholder="Enter a title for your prompt">
+      
+      <label for="promptText">Prompt:</label>
+      <textarea id="promptText" rows="5" placeholder="Enter your prompt text"></textarea>
+      
+      <label for="promptTags">Tags (comma separated):</label>
+      <input type="text" id="promptTags" placeholder="ai, writing, code, etc.">
+      
+      <div>
+        <label>Attachments:</label>
+        <input type="file" id="fileAttachment" multiple>
+        <div id="attachmentList"></div>
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <button id="savePromptBtn">Save</button>
+        <button id="cancelPromptBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- View Prompt Modal -->
+  <div id="viewPromptModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeViewModal">&times;</span>
+      <h3 id="viewPromptTitle"></h3>
+      
+      <div id="viewPromptTags" class="tags"></div>
+      
+      <pre id="viewPromptText" style="white-space: pre-wrap; background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;"></pre>
+      
+      <div id="viewAttachments"></div>
+      
+      <div style="margin-top: 15px;">
+        <button id="editPromptBtn">Edit</button>
+        <button id="deletePromptBtn">Delete</button>
+        <button id="importPromptBtn">Import to Chat</button>
+        <button id="copyPromptBtn">Copy Text</button>
+      </div>
+      
+      <div style="margin-top: 10px; font-size: 12px; color: #666;">
+        <p><strong>Import to Chat</strong>: Make sure you have a ChatGPT, Claude, or Grok tab open before importing a prompt.</p>
+        <p>Compatible with both chat.openai.com and chatgpt.com domains.</p>
+        <p>For file attachments:</p>
+        <ul style="margin-top: 5px; padding-left: 20px;">
+          <li>Text files (.txt, .md, .csv, .json) will display their content in the chat</li>
+          <li><strong>PDF files</strong>: The extension will try to upload them directly using the platform's native file uploader. If automatic upload fails, you'll be notified and need to upload manually.</li>
+          <li>Very large files may be truncated</li>
+        </ul>
+        <p>If import fails, try refreshing the AI chat page and then click "Retry Import".</p>
+      </div>
+    </div>
+  </div>
+  
+  <div id="notification" class="notification"></div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 
