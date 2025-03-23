@@ -1,13 +1,16 @@
 /**
- * PromptVault - Popup Script
- * Handles all interactions in the extension popup
+ * PromptVault - Main Extension Functionality
+ * Manages prompt storage, organization, and import functionality
  */
 
 class PromptVault {
   constructor() {
     this.currentPromptId = null;
     this.prompts = [];
-    this.attachments = new Map();
+    this.folders = [];
+    this.attachments = [];
+    this.currentFolder = 'all';
+    
     this.init();
   }
   
@@ -15,166 +18,578 @@ class PromptVault {
    * Initialize the extension
    */
   async init() {
-    // Load saved prompts
     await this.loadPrompts();
-    
-    // Set up event listeners
+    await this.loadFolders();
     this.setupEventListeners();
-    
-    // Display prompts in the UI
-    this.renderPromptList();
+    this.renderPromptGrid();
+    this.renderFolders();
+    this.updateEmptyState();
   }
   
   /**
-   * Set up event listeners for the UI
+   * Set up all event listeners
    */
   setupEventListeners() {
     // New prompt button
-    document.getElementById('newPromptBtn').addEventListener('click', () => {
-      this.showPromptModal();
+    document.getElementById('newPromptBtn').addEventListener('click', () => this.showPromptModal());
+    document.getElementById('emptyStateNewBtn').addEventListener('click', () => this.showPromptModal());
+    
+    // Search prompt input
+    document.getElementById('searchPrompts').addEventListener('input', (e) => this.filterPrompts(e.target.value));
+    
+    // Create prompt modal
+    document.getElementById('closePromptModal').addEventListener('click', () => this.closeModal('promptModal'));
+    document.getElementById('savePromptBtn').addEventListener('click', () => this.savePrompt());
+    document.getElementById('cancelPromptBtn').addEventListener('click', () => this.closeModal('promptModal'));
+    
+    // View prompt modal
+    document.getElementById('closeViewModal').addEventListener('click', () => this.closeModal('viewPromptModal'));
+    document.getElementById('editPromptBtn').addEventListener('click', () => this.editPrompt());
+    document.getElementById('deletePromptBtn').addEventListener('click', () => this.showDeleteModal());
+    document.getElementById('importPromptBtn').addEventListener('click', () => this.importPrompt());
+    document.getElementById('copyPromptBtn').addEventListener('click', () => this.copyPromptText());
+    document.getElementById('favoritePromptBtn').addEventListener('click', () => this.toggleFavorite());
+    
+    // Delete confirmation modal
+    document.getElementById('closeDeleteModal').addEventListener('click', () => this.closeModal('deleteModal'));
+    document.getElementById('confirmDeleteBtn').addEventListener('click', () => this.deletePrompt());
+    document.getElementById('cancelDeleteBtn').addEventListener('click', () => this.closeModal('deleteModal'));
+    
+    // Folder management
+    document.getElementById('createFolderBtn').addEventListener('click', () => this.showFolderModal());
+    document.getElementById('closeFolderModal').addEventListener('click', () => this.closeModal('folderModal'));
+    document.getElementById('saveFolderBtn').addEventListener('click', () => this.saveFolder());
+    document.getElementById('cancelFolderBtn').addEventListener('click', () => this.closeModal('folderModal'));
+    
+    // Folder selection
+    document.querySelectorAll('.folder').forEach(folder => {
+      folder.addEventListener('click', (e) => this.selectFolder(e.currentTarget.dataset.folder));
     });
     
-    // Search input
-    document.getElementById('searchPrompts').addEventListener('input', (e) => {
-      this.filterPrompts(e.target.value);
-    });
-    
-    // Modal close buttons
-    document.getElementById('closePromptModal').addEventListener('click', () => {
-      document.getElementById('promptModal').style.display = 'none';
-    });
-    
-    document.getElementById('closeViewModal').addEventListener('click', () => {
-      document.getElementById('viewPromptModal').style.display = 'none';
-    });
-    
-    // Save prompt button
-    document.getElementById('savePromptBtn').addEventListener('click', () => {
-      this.savePrompt();
-    });
-    
-    // Cancel button
-    document.getElementById('cancelPromptBtn').addEventListener('click', () => {
-      document.getElementById('promptModal').style.display = 'none';
-    });
-    
-    // File attachment input
-    document.getElementById('fileAttachment').addEventListener('change', (e) => {
-      this.handleFileSelection(e);
-    });
-    
-    // Action buttons in view modal
-    document.getElementById('editPromptBtn').addEventListener('click', () => {
-      this.editCurrentPrompt();
-    });
-    
-    document.getElementById('deletePromptBtn').addEventListener('click', () => {
-      this.deleteCurrentPrompt();
-    });
-    
-    document.getElementById('importPromptBtn').addEventListener('click', () => {
-      this.importPromptToChat();
-    });
-    
-    document.getElementById('copyPromptBtn').addEventListener('click', () => {
-      this.copyPromptText();
-    });
-    
-    // Add a retry button for import failures
-    const retryBtn = document.createElement('button');
-    retryBtn.id = 'retryImportBtn';
-    retryBtn.textContent = 'Retry Import';
-    retryBtn.style.display = 'none';
-    retryBtn.style.backgroundColor = '#ff9800';
-    retryBtn.addEventListener('click', () => {
-      this.importPromptToChat();
-    });
-    document.getElementById('viewPromptModal').querySelector('.modal-content').appendChild(retryBtn);
+    // File attachment
+    document.getElementById('fileAttachment').addEventListener('change', (e) => this.handleFileSelect(e));
   }
   
   /**
-   * Load prompts from storage
+   * Load saved prompts from storage
    */
   async loadPrompts() {
     try {
-      const data = await chrome.storage.local.get('prompts');
-      this.prompts = data.prompts || [];
+      const result = await new Promise(resolve => {
+        chrome.storage.local.get('prompts', resolve);
+      });
+      
+      this.prompts = result.prompts || [];
+      
+      // Add necessary properties to existing prompts if they don't have them
+      this.prompts = this.prompts.map(prompt => ({
+        ...prompt,
+        folder: prompt.folder || 'none',
+        favorite: prompt.favorite || false,
+        createdAt: prompt.createdAt || new Date().toISOString(),
+        lastModified: prompt.lastModified || new Date().toISOString()
+      }));
+      
+      console.log('Loaded prompts:', this.prompts);
     } catch (error) {
       console.error('Error loading prompts:', error);
-      this.prompts = [];
+      this.showNotification('Error loading prompts', 'error');
+    }
+  }
+  
+  /**
+   * Load saved folders from storage
+   */
+  async loadFolders() {
+    try {
+      const result = await new Promise(resolve => {
+        chrome.storage.local.get('folders', resolve);
+      });
+      
+      this.folders = result.folders || [];
+      console.log('Loaded folders:', this.folders);
+    } catch (error) {
+      console.error('Error loading folders:', error);
+      this.showNotification('Error loading folders', 'error');
     }
   }
   
   /**
    * Save prompts to storage
    */
-  async savePromptsToStorage() {
+  async savePrompts() {
     try {
-      await chrome.storage.local.set({ prompts: this.prompts });
-      return true;
+      await new Promise(resolve => {
+        chrome.storage.local.set({ prompts: this.prompts }, resolve);
+      });
+      console.log('Saved prompts:', this.prompts);
     } catch (error) {
       console.error('Error saving prompts:', error);
       this.showNotification('Error saving prompts', 'error');
-      return false;
     }
   }
   
   /**
-   * Render the list of prompts in the UI
+   * Save folders to storage
    */
-  renderPromptList() {
-    const promptList = document.getElementById('promptList');
+  async saveFolders() {
+    try {
+      await new Promise(resolve => {
+        chrome.storage.local.set({ folders: this.folders }, resolve);
+      });
+      console.log('Saved folders:', this.folders);
+    } catch (error) {
+      console.error('Error saving folders:', error);
+      this.showNotification('Error saving folders', 'error');
+    }
+  }
+  
+  /**
+   * Render the prompt grid with cards
+   */
+  renderPromptGrid() {
+    const promptGrid = document.getElementById('promptGrid');
+    promptGrid.innerHTML = '';
     
-    // Clear the list
-    promptList.innerHTML = '';
+    let filteredPrompts = this.prompts;
     
-    if (this.prompts.length === 0) {
-      // Show empty state
-      promptList.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: #666;">
-          <p>No prompts yet</p>
-          <p>Create your first prompt using the New Prompt button</p>
-        </div>
-      `;
-      return;
+    // Filter prompts based on current folder
+    if (this.currentFolder === 'favorites') {
+      filteredPrompts = this.prompts.filter(prompt => prompt.favorite);
+    } else if (this.currentFolder === 'recent') {
+      // Sort by last modified and take most recent 10
+      filteredPrompts = [...this.prompts]
+        .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
+        .slice(0, 10);
+    } else if (this.currentFolder !== 'all') {
+      // Filter by folder name
+      filteredPrompts = this.prompts.filter(prompt => prompt.folder === this.currentFolder);
     }
     
-    // Add each prompt to the list
-    this.prompts.forEach(prompt => {
-      const promptElement = document.createElement('div');
-      promptElement.className = 'prompt-item';
-      promptElement.dataset.id = prompt.id;
+    // Check for search filter
+    const searchTerm = document.getElementById('searchPrompts').value.toLowerCase();
+    if (searchTerm) {
+      filteredPrompts = filteredPrompts.filter(prompt => {
+        return (
+          prompt.title.toLowerCase().includes(searchTerm) ||
+          prompt.text.toLowerCase().includes(searchTerm) ||
+          (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(searchTerm)))
+        );
+      });
+    }
+    
+    // Render each prompt card
+    filteredPrompts.forEach(prompt => {
+      const card = document.createElement('div');
+      card.className = 'prompt-card';
+      card.dataset.id = prompt.id;
       
-      // Generate tag elements
-      const tagElements = prompt.tags && prompt.tags.length > 0
-        ? prompt.tags.map(tag => `<span class="tag">${tag}</span>`).join('')
-        : '';
+      // Create favorite indicator if favorited
+      const favoriteIndicator = prompt.favorite ? '<span style="position: absolute; top: 8px; left: 8px; color: gold;">⭐</span>' : '';
       
-      // Check if prompt has attachments
+      // Get first 100 characters of prompt text
+      const previewText = prompt.text.length > 100 ? 
+        prompt.text.substring(0, 100) + '...' : 
+        prompt.text;
+        
+      // Format the date to be more readable
+      const date = new Date(prompt.lastModified);
+      const formattedDate = date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+      
+      // Create tags HTML
+      let tagsHtml = '';
+      if (prompt.tags && prompt.tags.length > 0) {
+        const tagsToShow = prompt.tags.slice(0, 2); // Show max 2 tags
+        tagsHtml = tagsToShow.map(tag => `<span class="tag">${tag}</span>`).join('');
+        
+        // If there are more tags, add a +N indicator
+        if (prompt.tags.length > 2) {
+          tagsHtml += `<span class="tag">+${prompt.tags.length - 2}</span>`;
+        }
+      }
+      
+      // Create file attachments indicator
       const hasAttachments = prompt.attachments && prompt.attachments.length > 0;
+      const attachmentIndicator = hasAttachments ? 
+        `<span style="margin-left: 5px;">📎${prompt.attachments.length}</span>` : 
+        '';
       
-      promptElement.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${prompt.title}</div>
-        <div style="color: #666; font-size: 12px; margin-bottom: 5px;">
-          ${this.truncateText(prompt.text, 80)}
+      card.innerHTML = `
+        ${favoriteIndicator}
+        <div class="prompt-actions">
+          <button class="action-button" data-action="edit" title="Edit">✏️</button>
+          <button class="action-button delete-button" data-action="delete" title="Delete">🗑️</button>
         </div>
-        <div class="tags">
-          ${tagElements}
-          ${hasAttachments ? '<span class="tag" style="background-color: #e8f5e9; color: #2e7d32;">📎 Attachments</span>' : ''}
+        <div class="card-title">${prompt.title}</div>
+        <div class="card-content">${previewText}</div>
+        <div class="card-footer">
+          <div class="card-tags">
+            ${tagsHtml}
+          </div>
+          <div style="display: flex; align-items: center;">
+            ${formattedDate}
+            ${attachmentIndicator}
+          </div>
         </div>
       `;
       
       // Add click event to view the prompt
-      promptElement.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        // Don't trigger view if clicking an action button
+        if (e.target.closest('.action-button')) return;
         this.viewPrompt(prompt.id);
       });
       
-      promptList.appendChild(promptElement);
+      // Add click events for action buttons
+      const editBtn = card.querySelector('[data-action="edit"]');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.editPrompt(prompt.id);
+        });
+      }
+      
+      const deleteBtn = card.querySelector('[data-action="delete"]');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.currentPromptId = prompt.id;
+          this.showDeleteModal();
+        });
+      }
+      
+      promptGrid.appendChild(card);
+    });
+    
+    this.updateEmptyState();
+  }
+  
+  /**
+   * Render user folders
+   */
+  renderFolders() {
+    const folderContainer = document.getElementById('user-folders');
+    folderContainer.innerHTML = '';
+    
+    // Sort folders alphabetically
+    const sortedFolders = [...this.folders].sort((a, b) => a.name.localeCompare(b.name));
+    
+    sortedFolders.forEach(folder => {
+      const folderElement = document.createElement('div');
+      folderElement.className = `folder ${this.currentFolder === folder.id ? 'active' : ''}`;
+      folderElement.dataset.folder = folder.id;
+      folderElement.innerHTML = `
+        <span class="folder-icon">📁</span> ${folder.name}
+      `;
+      
+      folderElement.addEventListener('click', () => this.selectFolder(folder.id));
+      folderContainer.appendChild(folderElement);
+    });
+    
+    // Update folder dropdown in prompt modal
+    const folderSelect = document.getElementById('promptFolder');
+    
+    // Save the currently selected option to restore it later
+    const selectedValue = folderSelect.value;
+    
+    // Clear all options except the "None" option
+    while (folderSelect.options.length > 1) {
+      folderSelect.remove(1);
+    }
+    
+    // Add options for each folder
+    sortedFolders.forEach(folder => {
+      const option = document.createElement('option');
+      option.value = folder.id;
+      option.textContent = folder.name;
+      folderSelect.appendChild(option);
+    });
+    
+    // Restore the previously selected value if it exists in the new options
+    if (selectedValue && [...folderSelect.options].some(opt => opt.value === selectedValue)) {
+      folderSelect.value = selectedValue;
+    }
+  }
+  
+  /**
+   * Show/hide empty state message
+   */
+  updateEmptyState() {
+    const promptGrid = document.getElementById('promptGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (promptGrid.children.length === 0) {
+      emptyState.style.display = 'block';
+    } else {
+      emptyState.style.display = 'none';
+    }
+  }
+  
+  /**
+   * Select a folder to view
+   */
+  selectFolder(folderId) {
+    this.currentFolder = folderId;
+    
+    // Update active class
+    document.querySelectorAll('.folder').forEach(folder => {
+      folder.classList.toggle('active', folder.dataset.folder === folderId);
+    });
+    
+    this.renderPromptGrid();
+  }
+  
+  /**
+   * Show the prompt creation modal
+   */
+  showPromptModal(promptId = null) {
+    this.attachments = [];
+    document.getElementById('attachmentList').innerHTML = '';
+    
+    const modal = document.getElementById('promptModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const promptTitleInput = document.getElementById('promptTitle');
+    const promptTextInput = document.getElementById('promptText');
+    const promptTagsInput = document.getElementById('promptTags');
+    const promptFolderSelect = document.getElementById('promptFolder');
+    
+    if (promptId) {
+      // Edit existing prompt
+      this.currentPromptId = promptId;
+      const prompt = this.prompts.find(p => p.id === promptId);
+      
+      if (prompt) {
+        modalTitle.textContent = 'Edit Prompt';
+        promptTitleInput.value = prompt.title;
+        promptTextInput.value = prompt.text;
+        promptTagsInput.value = prompt.tags ? prompt.tags.join(', ') : '';
+        promptFolderSelect.value = prompt.folder || 'none';
+        
+        // Load attachments
+        if (prompt.attachments && prompt.attachments.length > 0) {
+          this.attachments = [...prompt.attachments];
+          this.renderAttachmentList();
+        }
+      }
+    } else {
+      // Create new prompt
+      this.currentPromptId = null;
+      modalTitle.textContent = 'Create New Prompt';
+      promptTitleInput.value = '';
+      promptTextInput.value = '';
+      promptTagsInput.value = '';
+      promptFolderSelect.value = 'none';
+    }
+    
+    modal.style.display = 'block';
+    promptTitleInput.focus();
+  }
+  
+  /**
+   * Show the folder creation modal
+   */
+  showFolderModal() {
+    document.getElementById('folderName').value = '';
+    document.getElementById('folderModal').style.display = 'block';
+    document.getElementById('folderName').focus();
+  }
+  
+  /**
+   * Show delete confirmation modal
+   */
+  showDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'block';
+  }
+  
+  /**
+   * Close any modal
+   */
+  closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+  }
+  
+  /**
+   * Handle file selection for attachments
+   */
+  handleFileSelect(event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    // Process each file
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      
+      // Check file size (max 5 MB)
+      if (file.size > 5 * 1024 * 1024) {
+        this.showNotification(`File ${file.name} is too large (max 5 MB)`, 'error');
+        continue;
+      }
+      
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const base64Content = e.target.result.split(',')[1]; // Remove data URL prefix
+        
+        this.attachments.push({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content: base64Content
+        });
+        
+        this.renderAttachmentList();
+      };
+      
+      reader.onerror = () => {
+        this.showNotification(`Error reading file ${file.name}`, 'error');
+      };
+      
+      reader.readAsDataURL(file);
+    }
+    
+    // Reset file input to allow selecting the same file again
+    event.target.value = '';
+  }
+  
+  /**
+   * Render the list of file attachments
+   */
+  renderAttachmentList() {
+    const attachmentList = document.getElementById('attachmentList');
+    attachmentList.innerHTML = '';
+    
+    this.attachments.forEach((file, index) => {
+      const fileItem = document.createElement('div');
+      fileItem.className = 'file-attachment';
+      fileItem.innerHTML = `
+        <span class="file-name">${file.name}</span>
+        <button class="action-button delete-button" data-index="${index}">×</button>
+      `;
+      
+      const deleteBtn = fileItem.querySelector('.delete-button');
+      deleteBtn.addEventListener('click', () => {
+        this.attachments.splice(index, 1);
+        this.renderAttachmentList();
+      });
+      
+      attachmentList.appendChild(fileItem);
     });
   }
   
   /**
-   * Show prompt details in the view modal
+   * Save a folder
+   */
+  async saveFolder() {
+    const folderNameInput = document.getElementById('folderName');
+    const folderName = folderNameInput.value.trim();
+    
+    if (!folderName) {
+      this.showNotification('Folder name cannot be empty', 'error');
+      return;
+    }
+    
+    // Check for duplicate folder names
+    if (this.folders.some(folder => folder.name.toLowerCase() === folderName.toLowerCase())) {
+      this.showNotification('A folder with this name already exists', 'error');
+      return;
+    }
+    
+    // Create a new folder
+    const newFolder = {
+      id: 'folder_' + Date.now(),
+      name: folderName,
+      createdAt: new Date().toISOString()
+    };
+    
+    this.folders.push(newFolder);
+    await this.saveFolders();
+    
+    this.closeModal('folderModal');
+    this.renderFolders();
+    this.showNotification('Folder created successfully');
+    
+    // Switch to the new folder
+    this.selectFolder(newFolder.id);
+  }
+  
+  /**
+   * Save a prompt
+   */
+  async savePrompt() {
+    const titleInput = document.getElementById('promptTitle');
+    const textInput = document.getElementById('promptText');
+    const tagsInput = document.getElementById('promptTags');
+    const folderSelect = document.getElementById('promptFolder');
+    
+    const title = titleInput.value.trim();
+    const text = textInput.value.trim();
+    const tagsText = tagsInput.value.trim();
+    const folderId = folderSelect.value;
+    
+    if (!title) {
+      this.showNotification('Title cannot be empty', 'error');
+      return;
+    }
+    
+    if (!text) {
+      this.showNotification('Prompt text cannot be empty', 'error');
+      return;
+    }
+    
+    // Parse tags
+    const tags = tagsText ? 
+      tagsText.split(',').map(tag => tag.trim()).filter(tag => tag) : 
+      [];
+    
+    const now = new Date().toISOString();
+    
+    if (this.currentPromptId) {
+      // Update existing prompt
+      const promptIndex = this.prompts.findIndex(p => p.id === this.currentPromptId);
+      
+      if (promptIndex !== -1) {
+        this.prompts[promptIndex] = {
+          ...this.prompts[promptIndex],
+          title,
+          text,
+          tags,
+          folder: folderId,
+          attachments: [...this.attachments],
+          lastModified: now
+        };
+        
+        await this.savePrompts();
+        this.showNotification('Prompt updated successfully');
+      }
+    } else {
+      // Create new prompt
+      const newPrompt = {
+        id: 'prompt_' + Date.now(),
+        title,
+        text,
+        tags,
+        folder: folderId,
+        attachments: [...this.attachments],
+        favorite: false,
+        createdAt: now,
+        lastModified: now
+      };
+      
+      this.prompts.push(newPrompt);
+      await this.savePrompts();
+      this.showNotification('Prompt created successfully');
+    }
+    
+    this.closeModal('promptModal');
+    this.renderPromptGrid();
+  }
+  
+  /**
+   * View a prompt
    */
   viewPrompt(promptId) {
     const prompt = this.prompts.find(p => p.id === promptId);
@@ -182,317 +597,100 @@ class PromptVault {
     
     this.currentPromptId = promptId;
     
-    // Update view modal content
-    document.getElementById('viewPromptTitle').textContent = prompt.title;
-    document.getElementById('viewPromptText').textContent = prompt.text;
+    const viewTitle = document.getElementById('viewPromptTitle');
+    const viewTags = document.getElementById('viewPromptTags');
+    const viewText = document.getElementById('viewPromptText');
+    const viewAttachments = document.getElementById('viewAttachments');
+    const favoriteBtn = document.getElementById('favoritePromptBtn');
     
-    // Set tags
-    const tagsContainer = document.getElementById('viewPromptTags');
-    tagsContainer.innerHTML = '';
+    viewTitle.textContent = prompt.title;
+    viewText.textContent = prompt.text;
+    
+    // Update favorite button
+    favoriteBtn.textContent = prompt.favorite ? '✩ Unfavorite' : '⭐ Favorite';
+    
+    // Render tags
+    viewTags.innerHTML = '';
     if (prompt.tags && prompt.tags.length > 0) {
       prompt.tags.forEach(tag => {
-        const tagElement = document.createElement('span');
-        tagElement.className = 'tag';
-        tagElement.textContent = tag;
-        tagsContainer.appendChild(tagElement);
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'tag';
+        tagSpan.textContent = tag;
+        viewTags.appendChild(tagSpan);
       });
     }
     
-    // Set attachments
-    const attachmentsContainer = document.getElementById('viewAttachments');
-    attachmentsContainer.innerHTML = '';
-    attachmentsContainer.style.display = 'block';
-    
+    // Render attachments
+    viewAttachments.innerHTML = '';
     if (prompt.attachments && prompt.attachments.length > 0) {
-      const attachmentHeader = document.createElement('h4');
-      attachmentHeader.textContent = 'Attachments';
-      attachmentHeader.style.marginTop = '15px';
-      attachmentsContainer.appendChild(attachmentHeader);
+      const attachmentsTitle = document.createElement('h4');
+      attachmentsTitle.textContent = 'Attachments:';
+      viewAttachments.appendChild(attachmentsTitle);
       
-      prompt.attachments.forEach(attachment => {
+      prompt.attachments.forEach(file => {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-attachment';
         fileItem.innerHTML = `
-          <span class="file-name">${attachment.name}</span>
+          <span class="file-name">${file.name}</span>
         `;
-        attachmentsContainer.appendChild(fileItem);
+        viewAttachments.appendChild(fileItem);
       });
-    } else {
-      attachmentsContainer.style.display = 'none';
     }
     
-    // Show modal
     document.getElementById('viewPromptModal').style.display = 'block';
   }
   
   /**
-   * Filter prompts based on search input
+   * Edit a prompt
    */
-  filterPrompts(searchTerm) {
-    if (!searchTerm) {
-      this.renderPromptList();
-      return;
-    }
+  editPrompt(promptId = null) {
+    promptId = promptId || this.currentPromptId;
+    if (!promptId) return;
     
-    const filteredPrompts = this.prompts.filter(prompt => {
-      const searchTermLower = searchTerm.toLowerCase();
-      return (
-        prompt.title.toLowerCase().includes(searchTermLower) ||
-        prompt.text.toLowerCase().includes(searchTermLower) ||
-        (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(searchTermLower)))
-      );
-    });
-    
-    const promptList = document.getElementById('promptList');
-    promptList.innerHTML = '';
-    
-    if (filteredPrompts.length === 0) {
-      promptList.innerHTML = `
-        <div style="padding: 20px; text-align: center; color: #666;">
-          <p>No matching prompts</p>
-          <p>Try a different search term</p>
-        </div>
-      `;
-      return;
-    }
-    
-    // Render the filtered prompts
-    filteredPrompts.forEach(prompt => {
-      const promptElement = document.createElement('div');
-      promptElement.className = 'prompt-item';
-      promptElement.dataset.id = prompt.id;
-      
-      // Generate tag elements
-      const tagElements = prompt.tags && prompt.tags.length > 0
-        ? prompt.tags.map(tag => `<span class="tag">${tag}</span>`).join('')
-        : '';
-      
-      // Check if prompt has attachments
-      const hasAttachments = prompt.attachments && prompt.attachments.length > 0;
-      
-      promptElement.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 5px;">${prompt.title}</div>
-        <div style="color: #666; font-size: 12px; margin-bottom: 5px;">
-          ${this.truncateText(prompt.text, 80)}
-        </div>
-        <div class="tags">
-          ${tagElements}
-          ${hasAttachments ? '<span class="tag" style="background-color: #e8f5e9; color: #2e7d32;">📎 Attachments</span>' : ''}
-        </div>
-      `;
-      
-      // Add click event to view the prompt
-      promptElement.addEventListener('click', () => {
-        this.viewPrompt(prompt.id);
-      });
-      
-      promptList.appendChild(promptElement);
-    });
+    this.closeModal('viewPromptModal');
+    this.showPromptModal(promptId);
   }
   
   /**
-   * Show the modal for creating a new prompt
+   * Delete a prompt
    */
-  showPromptModal(existingPrompt = null) {
-    const modal = document.getElementById('promptModal');
-    const titleInput = document.getElementById('promptTitle');
-    const textInput = document.getElementById('promptText');
-    const tagsInput = document.getElementById('promptTags');
-    const attachmentList = document.getElementById('attachmentList');
-    
-    // Reset form
-    document.getElementById('modalTitle').textContent = existingPrompt ? 'Edit Prompt' : 'Create New Prompt';
-    titleInput.value = existingPrompt ? existingPrompt.title : '';
-    textInput.value = existingPrompt ? existingPrompt.text : '';
-    tagsInput.value = existingPrompt && existingPrompt.tags ? existingPrompt.tags.join(', ') : '';
-    attachmentList.innerHTML = '';
-    
-    this.attachments.clear();
-
-    // If editing, load existing attachments
-    if (existingPrompt && existingPrompt.attachments && existingPrompt.attachments.length > 0) {
-      existingPrompt.attachments.forEach(attachment => {
-        this.attachments.set(attachment.name, attachment);
-        this.addAttachmentToList(attachment, attachmentList);
-      });
-    }
-    
-    // Store current prompt ID if editing
-    this.currentPromptId = existingPrompt ? existingPrompt.id : null;
-    
-    // Show modal
-    modal.style.display = 'block';
-  }
-  
-  /**
-   * Handle file selection for attachments
-   */
-  handleFileSelection(event) {
-    const files = event.target.files;
-    const attachmentList = document.getElementById('attachmentList');
-    
-    if (!files || files.length === 0) return;
-    
-    for (const file of files) {
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        this.showNotification(`File ${file.name} exceeds 5MB limit`, 'error');
-        continue;
-      }
-      
-      // Validate file type (can adjust based on supported types)
-      const allowedTypes = [
-        'text/plain', 'text/markdown', 'text/csv', 
-        'application/pdf', 'application/json'
-      ];
-      
-      if (!allowedTypes.includes(file.type) && 
-          !file.name.endsWith('.md') && 
-          !file.name.endsWith('.txt') && 
-          !file.name.endsWith('.csv') && 
-          !file.name.endsWith('.json')) {
-        this.showNotification(`Unsupported file type: ${file.name}`, 'error');
-        continue;
-      }
-      
-      // Read file as base64
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64Content = e.target.result.split(',')[1];
-        
-        const fileData = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          content: base64Content
-        };
-        
-        this.attachments.set(file.name, fileData);
-        this.addAttachmentToList(fileData, attachmentList);
-      };
-      
-      reader.readAsDataURL(file);
-    }
-    
-    // Reset file input
-    event.target.value = '';
-  }
-  
-  /**
-   * Add an attachment to the UI list
-   */
-  addAttachmentToList(fileData, container) {
-    const fileItem = document.createElement('div');
-    fileItem.className = 'file-attachment';
-    
-    fileItem.innerHTML = `
-      <span class="file-name">${fileData.name}</span>
-      <button type="button" data-filename="${fileData.name}" style="background: none; border: none; color: #f44336; cursor: pointer;">✕</button>
-    `;
-    
-    // Add remove button functionality
-    fileItem.querySelector('button').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const filename = e.target.dataset.filename;
-      this.attachments.delete(filename);
-      fileItem.remove();
-    });
-    
-    container.appendChild(fileItem);
-  }
-  
-  /**
-   * Save a prompt (new or existing)
-   */
-  async savePrompt() {
-    const titleInput = document.getElementById('promptTitle');
-    const textInput = document.getElementById('promptText');
-    const tagsInput = document.getElementById('promptTags');
-    
-    const title = titleInput.value.trim();
-    const text = textInput.value.trim();
-    const tags = tagsInput.value
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag !== '');
-    
-    if (!title || !text) {
-      this.showNotification('Title and prompt text are required', 'error');
-      return;
-    }
-    
-    // Convert attachments Map to array
-    const attachmentsArray = Array.from(this.attachments.values());
-    
-    const promptData = {
-      title,
-      text,
-      tags,
-      attachments: attachmentsArray,
-      created: new Date().toISOString()
-    };
-    
-    if (this.currentPromptId) {
-      // Update existing prompt
-      const index = this.prompts.findIndex(p => p.id === this.currentPromptId);
-      if (index !== -1) {
-        promptData.id = this.currentPromptId;
-        promptData.updated = new Date().toISOString();
-        this.prompts[index] = promptData;
-      }
-    } else {
-      // Create new prompt
-      promptData.id = this.generateId();
-      this.prompts.push(promptData);
-    }
-    
-    // Save to storage
-    const success = await this.savePromptsToStorage();
-    
-    if (success) {
-      // Update UI
-      this.renderPromptList();
-      
-      // Close modal
-      document.getElementById('promptModal').style.display = 'none';
-      
-      // Show success notification
-      this.showNotification('Prompt saved successfully');
-    }
-  }
-  
-  /**
-   * Edit the current prompt
-   */
-  editCurrentPrompt() {
+  async deletePrompt() {
     if (!this.currentPromptId) return;
     
-    const prompt = this.prompts.find(p => p.id === this.currentPromptId);
-    if (!prompt) return;
+    this.prompts = this.prompts.filter(p => p.id !== this.currentPromptId);
+    await this.savePrompts();
     
-    document.getElementById('viewPromptModal').style.display = 'none';
-    this.showPromptModal(prompt);
+    this.closeModal('deleteModal');
+    this.closeModal('viewPromptModal');
+    this.renderPromptGrid();
+    
+    this.showNotification('Prompt deleted successfully');
   }
   
   /**
-   * Delete the current prompt
+   * Toggle favorite status of a prompt
    */
-  deleteCurrentPrompt() {
+  async toggleFavorite() {
     if (!this.currentPromptId) return;
     
-    if (confirm('Are you sure you want to delete this prompt?')) {
-      const index = this.prompts.findIndex(p => p.id === this.currentPromptId);
-      if (index !== -1) {
-        this.prompts.splice(index, 1);
-        this.savePromptsToStorage().then((success) => {
-          if (success) {
-            document.getElementById('viewPromptModal').style.display = 'none';
-            this.renderPromptList();
-            this.showNotification('Prompt deleted');
-          }
-        });
-      }
-    }
+    const promptIndex = this.prompts.findIndex(p => p.id === this.currentPromptId);
+    if (promptIndex === -1) return;
+    
+    this.prompts[promptIndex].favorite = !this.prompts[promptIndex].favorite;
+    await this.savePrompts();
+    
+    // Update favorite button text
+    const favoriteBtn = document.getElementById('favoritePromptBtn');
+    favoriteBtn.textContent = this.prompts[promptIndex].favorite ? 
+      '✩ Unfavorite' : 
+      '⭐ Favorite';
+    
+    this.renderPromptGrid();
+    this.showNotification(
+      this.prompts[promptIndex].favorite ? 
+      'Added to favorites' : 
+      'Removed from favorites'
+    );
   }
   
   /**
@@ -504,128 +702,117 @@ class PromptVault {
     const prompt = this.prompts.find(p => p.id === this.currentPromptId);
     if (!prompt) return;
     
-    navigator.clipboard.writeText(prompt.text).then(() => {
-      this.showNotification('Prompt copied to clipboard');
-    }).catch(err => {
-      this.showNotification('Failed to copy: ' + err.message, 'error');
-    });
+    navigator.clipboard.writeText(prompt.text)
+      .then(() => {
+        this.showNotification('Prompt text copied to clipboard');
+      })
+      .catch(err => {
+        console.error('Failed to copy text:', err);
+        this.showNotification('Failed to copy text', 'error');
+      });
   }
   
   /**
-   * Import prompt to the current chat
+   * Filter prompts based on search input
    */
-  importPromptToChat() {
+  filterPrompts(searchTerm) {
+    // Just re-render with the search term applied
+    this.renderPromptGrid();
+  }
+  
+  /**
+   * Import prompt to AI chat
+   */
+  async importPrompt() {
     if (!this.currentPromptId) return;
     
     const prompt = this.prompts.find(p => p.id === this.currentPromptId);
     if (!prompt) return;
     
-    // Show loading state
-    document.getElementById('importPromptBtn').textContent = 'Importing...';
-    document.getElementById('importPromptBtn').disabled = true;
-    document.getElementById('retryImportBtn').style.display = 'none';
-    
-    // Send message to content script to insert prompt
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    try {
+      // Find all tabs with supported platforms
+      const tabs = await new Promise(resolve => {
+        chrome.tabs.query({
+          url: [
+            '*://chat.openai.com/*',
+            '*://chatgpt.com/*',
+            '*://claude.ai/*',
+            '*://grok.x.ai/*'
+          ]
+        }, resolve);
+      });
+      
       if (tabs.length === 0) {
-        this.showNotification('No active tab found', 'error', true);
-        return;
-      }
-
-      // Check if the current tab is a supported platform
-      const currentUrl = tabs[0].url;
-      const isSupportedPlatform = 
-        currentUrl.includes('chat.openai.com') || 
-        currentUrl.includes('chatgpt.com') || 
-        currentUrl.includes('claude.ai') || 
-        currentUrl.includes('grok.x.ai');
-      
-      if (!isSupportedPlatform) {
-        this.showNotification('Current page is not a supported AI platform', 'error', true);
+        this.showNotification('No compatible AI chat tabs found. Please open ChatGPT, Claude, or Grok in a new tab.', 'error');
         return;
       }
       
-      try {
-        chrome.tabs.sendMessage(
-          tabs[0].id,
-          {
-            action: 'insertPrompt',
-            prompt: prompt.text,
-            attachments: prompt.attachments || []
-          },
-          (response) => {
-            // Reset button state
-            document.getElementById('importPromptBtn').textContent = 'Import to Chat';
-            document.getElementById('importPromptBtn').disabled = false;
-            
-            // Check for communication error
-            if (chrome.runtime.lastError) {
-              console.error('Error:', chrome.runtime.lastError);
-              this.showNotification('Error: Cannot communicate with the page. Try refreshing.', 'error', true);
-              return;
-            }
-            
-            if (response && response.success) {
-              this.showNotification('Prompt imported successfully');
-              
-              // Close the popup after a short delay to show the notification
-              setTimeout(() => {
-                window.close();
-              }, 1000);
-            } else {
-              this.showNotification('Failed to import prompt: ' + (response?.message || 'Unknown error'), 'error', true);
-            }
+      // Use the most recently active tab if there are multiple options
+      tabs.sort((a, b) => b.lastAccessed - a.lastAccessed);
+      const targetTab = tabs[0];
+      
+      // Track if this is the first import attempt
+      const importAttempt = prompt.importAttempt || 0;
+      
+      // Update the prompt in storage with the latest import attempt
+      const promptIndex = this.prompts.findIndex(p => p.id === this.currentPromptId);
+      if (promptIndex !== -1) {
+        this.prompts[promptIndex].importAttempt = importAttempt + 1;
+        this.prompts[promptIndex].lastModified = new Date().toISOString();
+        await this.savePrompts();
+      }
+      
+      // Send message to the content script
+      chrome.tabs.sendMessage(
+        targetTab.id,
+        {
+          action: 'insertPrompt',
+          prompt: prompt.text,
+          attachments: prompt.attachments || []
+        },
+        response => {
+          if (chrome.runtime.lastError) {
+            console.error('Error sending message:', chrome.runtime.lastError);
+            this.showNotification('Error communicating with AI chat tab. Try refreshing the page.', 'error');
+            return;
           }
-        );
-      } catch (error) {
-        // Reset button state
-        document.getElementById('importPromptBtn').textContent = 'Import to Chat';
-        document.getElementById('importPromptBtn').disabled = false;
-        
-        console.error('Error sending message:', error);
-        this.showNotification('Error sending message to the page', 'error', true);
-      }
-    });
+          
+          console.log('Import response:', response);
+          
+          if (response && response.success) {
+            this.showNotification(response.message || 'Prompt imported successfully');
+            
+            // Switch to the tab
+            chrome.tabs.update(targetTab.id, { active: true });
+          } else {
+            const errorMsg = response ? response.message : 'Unknown error';
+            this.showNotification(`Import failed: ${errorMsg}`, 'error');
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error importing prompt:', error);
+      this.showNotification('Error importing prompt', 'error');
+    }
   }
   
   /**
    * Show a notification
    */
-  showNotification(message, type = 'success', showRetry = false) {
+  showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
     notification.textContent = message;
     notification.style.backgroundColor = type === 'success' ? '#4caf50' : '#f44336';
     notification.style.display = 'block';
     
-    // Show or hide retry button for import errors
-    const retryBtn = document.getElementById('retryImportBtn');
-    if (retryBtn) {
-      retryBtn.style.display = type === 'error' && showRetry ? 'inline-block' : 'none';
-    }
-    
+    // Hide notification after 3 seconds
     setTimeout(() => {
       notification.style.display = 'none';
     }, 3000);
   }
-  
-  /**
-   * Helper to truncate text with ellipsis
-   */
-  truncateText(text, maxLength) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-  }
-  
-  /**
-   * Generate a unique ID
-   */
-  generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-  }
 }
 
-// Initialize the extension when the document is loaded
+// Initialize the PromptVault when the document is loaded
 document.addEventListener('DOMContentLoaded', () => {
   new PromptVault();
-}); 
+});

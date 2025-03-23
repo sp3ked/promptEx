@@ -7,13 +7,14 @@
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      width: 350px;
-      height: 500px;
+      width: 800px;
+      height: 600px;
       margin: 0;
-      padding: 10px;
-      overflow-y: auto;
+      padding: 0;
+      overflow: hidden;
       background-color: #f5f7fa;
       color: #333;
+      display: flex;
     }
     
     h1, h2, h3 {
@@ -46,27 +47,144 @@
       box-sizing: border-box;
     }
     
-    .prompt-list {
-      margin-top: 10px;
-      max-height: 300px;
+    /* Sidebar Styles */
+    .sidebar {
+      width: 250px;
+      background-color: #f0f4f8;
+      border-right: 1px solid #ddd;
+      height: 100%;
       overflow-y: auto;
+      padding: 15px;
+      box-sizing: border-box;
     }
     
-    .prompt-item {
-      padding: 10px;
-      border: 1px solid #ddd;
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .folder {
+      padding: 8px 10px;
       border-radius: 4px;
-      margin-bottom: 8px;
-      background-color: white;
+      margin-bottom: 5px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
     }
     
-    .prompt-item:hover {
-      background-color: #f0f5ff;
+    .folder:hover {
+      background-color: #e0e7ff;
     }
     
-    .tags {
-      margin-top: 5px;
+    .folder.active {
+      background-color: #d0d9ff;
+      font-weight: bold;
+    }
+    
+    .folder-icon {
+      margin-right: 8px;
+      color: #1a73e8;
+    }
+    
+    .create-folder {
+      font-size: 13px;
+      padding: 5px 8px;
+      margin-top: 10px;
+    }
+    
+    /* Main Content Styles */
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      height: 100%;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+    
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .search-container {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      max-width: 300px;
+      position: relative;
+      margin-right: 15px;
+    }
+    
+    .search-container input {
+      padding-left: 30px;
+      margin-bottom: 0;
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      color: #888;
+    }
+    
+    .prompt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    
+    .prompt-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      cursor: pointer;
+      position: relative;
+      border: 1px solid #eaeaea;
+      transition: transform 0.2s, box-shadow 0.2s;
+      height: 150px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .prompt-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .card-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #1a73e8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .card-content {
+      font-size: 13px;
+      color: #666;
+      overflow: hidden;
+      flex-grow: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+    }
+    
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
     }
     
     .tag {
@@ -75,7 +193,39 @@
       padding: 2px 6px;
       border-radius: 4px;
       font-size: 12px;
-      margin-right: 5px;
+    }
+    
+    .prompt-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: none;
+    }
+    
+    .prompt-card:hover .prompt-actions {
+      display: flex;
+    }
+    
+    .action-button {
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      padding: 3px;
+      margin: 0 2px;
+      font-size: 14px;
+    }
+    
+    .action-button:hover {
+      color: #1a73e8;
+    }
+    
+    .delete-button {
+      color: #e53935;
+    }
+    
+    .delete-button:hover {
+      color: #c62828;
     }
     
     .modal {
@@ -100,9 +250,19 @@
       overflow-y: auto;
     }
     
+    .modal-header {
+      position: sticky;
+      top: 0;
+      background-color: white;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      z-index: 1;
+    }
+    
     .close {
       position: absolute;
-      top: 10px;
+      top: 15px;
       right: 15px;
       font-size: 20px;
       font-weight: bold;
@@ -139,28 +299,80 @@
       z-index: 1000;
       display: none;
     }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+    
+    .empty-state button {
+      margin-top: 15px;
+    }
   </style>
 </head>
 <body>
-  <h2>PromptVault</h2>
-  
-  <div>
-    <button id="newPromptBtn">New Prompt</button>
-    <input type="text" id="searchPrompts" placeholder="Search prompts...">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h3>PromptVault</h3>
+    </div>
+    
+    <div id="folders">
+      <div class="folder active" data-folder="all">
+        <span class="folder-icon">📁</span> All Prompts
+      </div>
+      <div class="folder" data-folder="favorites">
+        <span class="folder-icon">⭐</span> Favorites
+      </div>
+      <div class="folder" data-folder="recent">
+        <span class="folder-icon">🕒</span> Recent
+      </div>
+    </div>
+    
+    <div id="user-folders">
+      <!-- User created folders will be added here -->
+    </div>
+    
+    <button class="create-folder" id="createFolderBtn">+ Create Folder</button>
   </div>
   
-  <div class="prompt-list" id="promptList">
-    <!-- Prompt items will be added here dynamically -->
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="content-header">
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchPrompts" placeholder="Search prompts...">
+      </div>
+      <button id="newPromptBtn">+ New Prompt</button>
+    </div>
+    
+    <div class="prompt-grid" id="promptGrid">
+      <!-- Prompt cards will be added here dynamically -->
+    </div>
+    
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <p>No prompts found in this folder</p>
+      <button id="emptyStateNewBtn">Create Your First Prompt</button>
+    </div>
   </div>
   
   <!-- Create/Edit Prompt Modal -->
   <div id="promptModal" class="modal">
     <div class="modal-content">
-      <span class="close" id="closePromptModal">&times;</span>
-      <h3 id="modalTitle">Create New Prompt</h3>
+      <div class="modal-header">
+        <h3 id="modalTitle">Create New Prompt</h3>
+        <span class="close" id="closePromptModal">&times;</span>
+      </div>
       
       <label for="promptTitle">Title:</label>
       <input type="text" id="promptTitle" placeholder="Enter a title for your prompt">
+      
+      <label for="promptFolder">Folder:</label>
+      <select id="promptFolder">
+        <option value="none">None</option>
+        <!-- Folders will be populated dynamically -->
+      </select>
       
       <label for="promptText">Prompt:</label>
       <textarea id="promptText" rows="5" placeholder="Enter your prompt text"></textarea>
@@ -184,8 +396,10 @@
   <!-- View Prompt Modal -->
   <div id="viewPromptModal" class="modal">
     <div class="modal-content">
-      <span class="close" id="closeViewModal">&times;</span>
-      <h3 id="viewPromptTitle"></h3>
+      <div class="modal-header">
+        <h3 id="viewPromptTitle"></h3>
+        <span class="close" id="closeViewModal">&times;</span>
+      </div>
       
       <div id="viewPromptTags" class="tags"></div>
       
@@ -198,6 +412,7 @@
         <button id="deletePromptBtn">Delete</button>
         <button id="importPromptBtn">Import to Chat</button>
         <button id="copyPromptBtn">Copy Text</button>
+        <button id="favoritePromptBtn">⭐ Favorite</button>
       </div>
       
       <div style="margin-top: 10px; font-size: 12px; color: #666;">
@@ -210,6 +425,41 @@
           <li>Very large files may be truncated</li>
         </ul>
         <p>If import fails, try refreshing the AI chat page and then click "Retry Import".</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Create Folder Modal -->
+  <div id="folderModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>Create New Folder</h3>
+        <span class="close" id="closeFolderModal">&times;</span>
+      </div>
+      
+      <label for="folderName">Folder Name:</label>
+      <input type="text" id="folderName" placeholder="Enter a name for your folder">
+      
+      <div style="margin-top: 15px;">
+        <button id="saveFolderBtn">Create</button>
+        <button id="cancelFolderBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>Delete Prompt</h3>
+        <span class="close" id="closeDeleteModal">&times;</span>
+      </div>
+      
+      <p>Are you sure you want to delete this prompt? This action cannot be undone.</p>
+      
+      <div style="margin-top: 15px;">
+        <button id="confirmDeleteBtn" style="background-color: #e53935;">Delete</button>
+        <button id="cancelDeleteBtn">Cancel</button>
       </div>
     </div>
   </div>
