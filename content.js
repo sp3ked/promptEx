@@ -1,41 +1,28 @@
 /**
- * PromptVault - Content Script
+ * Promptr - Content Script
  * Handles inserting prompts into AI chat interfaces
  */
 
-console.log('PromptVault content script loaded.');
+console.log('Promptr content script loaded.');
 
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Message received in content script:', message);
   
   if (message.action === 'insertPrompt') {
-    // Determine which platform we're on based on hostname
     const hostname = window.location.hostname;
     console.log('Current hostname:', hostname);
     
     let result;
-    
-    // Insert based on platform
-    if (hostname.includes('chat.openai.com') || hostname.includes('chatgpt.com')) {
+    if (hostname.includes('chatgpt.com') || hostname.includes('chat.openai.com')) {
       result = insertPromptChatGPT(message.prompt, message.attachments);
-    } else if (hostname.includes('claude.ai')) {
-      result = insertPromptClaude(message.prompt, message.attachments);
-    } else if (hostname.includes('grok.x.ai')) {
-      result = insertPromptGrok(message.prompt, message.attachments);
     } else {
-      result = { 
-        success: false, 
-        message: 'Unsupported platform. Currently supports: ChatGPT, Claude, and Grok.' 
-      };
+      result = { success: false, message: 'Please navigate to ChatGPT' };
     }
     
     console.log('Sending response:', result);
-    // Send response back to popup
     sendResponse(result);
   }
-  
-  // Keep the message channel open for async response
   return true;
 });
 
@@ -47,7 +34,7 @@ function decodeBase64Content(base64Content, fileType) {
     // Special handling for PDF files - we can't display them directly
     if (fileType === 'application/pdf' || fileType.includes('pdf')) {
       console.log('PDF file detected, adding placeholder text');
-      return '[PDF content - view in original file]';
+      return `\n[PDF: View ${fileType} content in original file - ChatGPT free version doesn't support PDF uploads]`;
     }
     
     // Make sure we have content to decode
@@ -86,171 +73,62 @@ function decodeBase64Content(base64Content, fileType) {
  */
 function insertPromptChatGPT(promptText, attachments = []) {
   try {
-    console.log('Trying to insert into ChatGPT...');
+    console.log('Trying to insert into ChatGPT...', promptText.substring(0, 100) + '...');
     
-    // Try multiple selectors to find the input field - ChatGPT's selector may change frequently
-    const textarea = 
-      document.querySelector('#prompt-textarea') || // Most common for newer ChatGPT interfaces
-      document.querySelector('textarea[data-id="root"]') || 
-      document.querySelector('textarea[placeholder*="Send a message"]') ||
-      document.querySelector('textarea[placeholder*="Message ChatGPT"]') ||
-      document.querySelector('textarea.w-full') ||
-      document.querySelector('form textarea') ||
-      document.querySelector('textarea');
+    // Find the contenteditable div
+    const editor = 
+      document.querySelector('#prompt-textarea[contenteditable="true"]') ||
+      document.querySelector('div.ProseMirror[contenteditable="true"]') ||
+      document.querySelector('div[contenteditable="true"]');
     
-    if (!textarea) {
+    if (!editor) {
       console.error('Could not find ChatGPT input field');
       return { 
         success: false, 
-        message: 'Could not find ChatGPT input field. Try refreshing the page.' 
+        message: 'ChatGPT input field not found. Try refreshing the page.' 
       };
     }
     
-    console.log('Found ChatGPT input field:', textarea);
+    console.log('Found ChatGPT input field:', editor);
     
-    // First insert just the prompt text
-    textarea.value = promptText;
-    textarea.style.height = 'auto';
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    textarea.dispatchEvent(new Event('change', { bubbles: true }));
-    
-    // Check for file attachments
+    // Build the full text
+    let fullText = promptText;
     if (attachments && attachments.length > 0) {
-      const pdfAttachments = attachments.filter(file => 
-        file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-      );
-      
-      const textAttachments = attachments.filter(file => 
-        !(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))
-      );
-      
-      // Handle PDF files by trying to use the actual file upload functionality
-      if (pdfAttachments.length > 0) {
-        console.log('PDF attachments detected, attempting to trigger file upload');
-        
-        // Find the file upload button/input
-        const fileInput = findFileInput();
-        
-        if (fileInput) {
-          console.log('Found file input:', fileInput);
-          
-          // Create a notification that we're attempting to upload files
-          const notification = document.createElement('div');
-          notification.style.position = 'fixed';
-          notification.style.top = '10px';
-          notification.style.left = '50%';
-          notification.style.transform = 'translateX(-50%)';
-          notification.style.backgroundColor = '#4a6cf7';
-          notification.style.color = 'white';
-          notification.style.padding = '10px 20px';
-          notification.style.borderRadius = '4px';
-          notification.style.zIndex = '10000';
-          notification.textContent = 'PromptVault is attempting to upload PDF files...';
-          document.body.appendChild(notification);
-          
-          // Attempt to trigger the file upload
-          try {
-            // For each PDF file, convert from base64 to actual File object
-            const filePromises = pdfAttachments.map(attachment => {
-              return base64ToFile(attachment.content, attachment.name, attachment.type);
-            });
-            
-            Promise.all(filePromises).then(files => {
-              // Create a FileList-like object
-              const fileListObj = {
-                length: files.length,
-                item: index => files[index],
-                [Symbol.iterator]: function* () {
-                  for (let i = 0; i < files.length; i++) {
-                    yield files[i];
-                  }
-                }
-              };
-              for (let i = 0; i < files.length; i++) {
-                fileListObj[i] = files[i];
-              }
-              
-              // Attach files to the input and dispatch change event
-              Object.defineProperty(fileInput, 'files', {
-                value: fileListObj,
-                writable: false
-              });
-              
-              fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-              
-              // Visual feedback
-              setTimeout(() => {
-                notification.textContent = 'PDF files uploaded successfully!';
-                notification.style.backgroundColor = '#4caf50';
-                
-                setTimeout(() => {
-                  notification.remove();
-                }, 3000);
-              }, 1500);
-            }).catch(err => {
-              console.error('Error creating files from base64:', err);
-              notification.textContent = 'Error uploading PDFs. Please upload manually.';
-              notification.style.backgroundColor = '#f44336';
-              
-              setTimeout(() => {
-                notification.remove();
-              }, 3000);
-            });
-          } catch (err) {
-            console.error('Error uploading files:', err);
-            notification.textContent = 'Error uploading PDFs. Please upload manually.';
-            notification.style.backgroundColor = '#f44336';
-            
-            setTimeout(() => {
-              notification.remove();
-            }, 3000);
-          }
-        } else {
-          console.log('Could not find file input, adding note about file upload');
-          // Add a note that files need to be uploaded manually
-          textarea.value += '\n\n[Note: PDF files need to be uploaded manually using the file upload button]';
-          textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }
-      
-      // Append text file contents to the prompt if there are any
-      if (textAttachments.length > 0) {
-        let fileContent = '\n\nAttached Files:';
-        
-        // Add the content of each text file
-        textAttachments.forEach(file => {
-          const decodedContent = decodeBase64Content(file.content, file.type);
-          fileContent += `\n\n--- ${file.name} ---\n\n${decodedContent}`;
-        });
-        
-        // Append to existing text and trigger events
-        textarea.value += fileContent;
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        textarea.dispatchEvent(new Event('change', { bubbles: true }));
-      }
+      fullText += '\n\nAttached Content:';
+      attachments.forEach(file => {
+        const decodedContent = decodeBase64Content(file.content, file.type);
+        fullText += `\n--- ${file.name} ---\n${decodedContent}`;
+      });
     }
     
-    // Focus the textarea
-    textarea.focus();
+    // Method 1: Set content and dispatch events
+    editor.innerHTML = ''; // Clear existing content
+    editor.textContent = fullText;
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+    editor.dispatchEvent(new Event('change', { bubbles: true }));
     
-    // Simulate keyboard events to ensure the UI updates
-    const keyboardEvents = [
-      new KeyboardEvent('keydown', { key: 'a', bubbles: true }),
-      new KeyboardEvent('keypress', { key: 'a', bubbles: true }),
-      new KeyboardEvent('keyup', { key: 'a', bubbles: true })
-    ];
+    // Method 2: If Method 1 doesn't work, try simulating paste
+    if (!editor.textContent) {
+      const clipboardData = new DataTransfer();
+      clipboardData.setData('text/plain', fullText);
+      const pasteEvent = new ClipboardEvent('paste', {
+        clipboardData,
+        bubbles: true
+      });
+      editor.dispatchEvent(pasteEvent);
+    }
     
-    keyboardEvents.forEach(event => {
-      textarea.dispatchEvent(event);
-    });
+    // Focus the editor
+    editor.focus();
     
-    // Give visual feedback
-    const originalBorder = textarea.style.borderColor;
-    textarea.style.borderColor = '#4a6cf7';
+    // Visual feedback
+    const originalBorder = editor.style.border;
+    editor.style.border = '2px solid #10a37f';
     setTimeout(() => {
-      textarea.style.borderColor = originalBorder;
+      editor.style.border = originalBorder;
     }, 500);
     
+    console.log('Successfully inserted prompt text into ChatGPT');
     return { success: true, message: 'Prompt inserted into ChatGPT' };
   } catch (error) {
     console.error('Error inserting prompt into ChatGPT:', error);
@@ -396,7 +274,7 @@ function insertPromptClaude(promptText, attachments = []) {
           notification.style.padding = '10px 20px';
           notification.style.borderRadius = '4px';
           notification.style.zIndex = '10000';
-          notification.textContent = 'PromptVault is attempting to upload PDF files...';
+          notification.textContent = 'Promptr is attempting to upload PDF files...';
           document.body.appendChild(notification);
           
           // Attempt to trigger the file upload
@@ -590,7 +468,7 @@ function insertPromptGrok(promptText, attachments = []) {
           notification.style.padding = '10px 20px';
           notification.style.borderRadius = '4px';
           notification.style.zIndex = '10000';
-          notification.textContent = 'PromptVault is attempting to upload PDF files...';
+          notification.textContent = 'Promptr is attempting to upload PDF files...';
           document.body.appendChild(notification);
           
           // Attempt to trigger the file upload

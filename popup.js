@@ -1,9 +1,9 @@
 /**
- * PromptVault - Main Extension Functionality
+ * Promptr - Main Extension Functionality
  * Manages prompt storage, organization, and import functionality
  */
 
-class PromptVault {
+class Promptr {
   constructor() {
     this.currentPromptId = null;
     this.prompts = [];
@@ -23,6 +23,7 @@ class PromptVault {
     this.setupEventListeners();
     this.renderPromptGrid();
     this.renderFolders();
+    this.selectFolder('all');
     this.updateEmptyState();
   }
   
@@ -61,8 +62,8 @@ class PromptVault {
     document.getElementById('saveFolderBtn').addEventListener('click', () => this.saveFolder());
     document.getElementById('cancelFolderBtn').addEventListener('click', () => this.closeModal('folderModal'));
     
-    // Folder selection
-    document.querySelectorAll('.folder').forEach(folder => {
+    // Folder selection - add event listeners for default folders too
+    document.querySelectorAll('#folders .folder, #user-folders .folder').forEach(folder => {
       folder.addEventListener('click', (e) => this.selectFolder(e.currentTarget.dataset.folder));
     });
     
@@ -151,20 +152,22 @@ class PromptVault {
     const promptGrid = document.getElementById('promptGrid');
     promptGrid.innerHTML = '';
     
-    let filteredPrompts = this.prompts;
+    let filteredPrompts = [...this.prompts]; // Create a copy to avoid modifying original array
     
     // Filter prompts based on current folder
     if (this.currentFolder === 'favorites') {
-      filteredPrompts = this.prompts.filter(prompt => prompt.favorite);
+      filteredPrompts = filteredPrompts.filter(prompt => prompt.favorite);
     } else if (this.currentFolder === 'recent') {
       // Sort by last modified and take most recent 10
-      filteredPrompts = [...this.prompts]
-        .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
-        .slice(0, 10);
+      filteredPrompts.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+      filteredPrompts = filteredPrompts.slice(0, 10);
     } else if (this.currentFolder !== 'all') {
       // Filter by folder name
-      filteredPrompts = this.prompts.filter(prompt => prompt.folder === this.currentFolder);
+      filteredPrompts = filteredPrompts.filter(prompt => prompt.folder === this.currentFolder);
     }
+    
+    // Sort prompts by last modified date for consistent ordering
+    filteredPrompts.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
     
     // Check for search filter
     const searchTerm = document.getElementById('searchPrompts').value.toLowerCase();
@@ -177,6 +180,8 @@ class PromptVault {
         );
       });
     }
+    
+    console.log('Rendering prompts for folder:', this.currentFolder, 'count:', filteredPrompts.length);
     
     // Render each prompt card
     filteredPrompts.forEach(prompt => {
@@ -278,6 +283,14 @@ class PromptVault {
     // Sort folders alphabetically
     const sortedFolders = [...this.folders].sort((a, b) => a.name.localeCompare(b.name));
     
+    // First remove old event listeners from default folders
+    document.querySelectorAll('#folders .folder').forEach(folder => {
+      const newFolder = folder.cloneNode(true);
+      folder.parentNode.replaceChild(newFolder, folder);
+      newFolder.addEventListener('click', () => this.selectFolder(newFolder.dataset.folder));
+    });
+    
+    // Add user folders
     sortedFolders.forEach(folder => {
       const folderElement = document.createElement('div');
       folderElement.className = `folder ${this.currentFolder === folder.id ? 'active' : ''}`;
@@ -333,14 +346,17 @@ class PromptVault {
    * Select a folder to view
    */
   selectFolder(folderId) {
+    console.log('Selecting folder:', folderId);
     this.currentFolder = folderId;
     
-    // Update active class
-    document.querySelectorAll('.folder').forEach(folder => {
+    // Update active class on all folders (both default and user folders)
+    document.querySelectorAll('#folders .folder, #user-folders .folder').forEach(folder => {
       folder.classList.toggle('active', folder.dataset.folder === folderId);
     });
     
+    // Re-render the prompt grid with the selected folder
     this.renderPromptGrid();
+    this.updateEmptyState();
   }
   
   /**
@@ -406,10 +422,25 @@ class PromptVault {
   }
   
   /**
-   * Close any modal
+   * Close a modal dialog
    */
   closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.style.display = 'none';
+    }
+    
+    // Clear any input fields to prevent data bleeding between sessions
+    if (modalId === 'promptModal') {
+      document.getElementById('promptTitle').value = '';
+      document.getElementById('promptText').value = '';
+      document.getElementById('promptTags').value = '';
+      document.getElementById('promptFolder').value = 'none';
+      document.getElementById('attachmentList').innerHTML = '';
+      this.attachments = [];
+    } else if (modalId === 'folderModal') {
+      document.getElementById('folderName').value = '';
+    }
   }
   
   /**
@@ -505,15 +536,20 @@ class PromptVault {
       createdAt: new Date().toISOString()
     };
     
+    // Add to folders array
     this.folders.push(newFolder);
+    
+    // Save to storage
     await this.saveFolders();
     
+    // Close modal and clear input
     this.closeModal('folderModal');
-    this.renderFolders();
-    this.showNotification('Folder created successfully');
     
-    // Switch to the new folder
+    // Re-render folders and switch to the new folder
+    await this.renderFolders();
     this.selectFolder(newFolder.id);
+    
+    this.showNotification('Folder created successfully');
   }
   
   /**
@@ -561,9 +597,6 @@ class PromptVault {
           attachments: [...this.attachments],
           lastModified: now
         };
-        
-        await this.savePrompts();
-        this.showNotification('Prompt updated successfully');
       }
     } else {
       // Create new prompt
@@ -580,12 +613,26 @@ class PromptVault {
       };
       
       this.prompts.push(newPrompt);
-      await this.savePrompts();
-      this.showNotification('Prompt created successfully');
     }
     
+    // Save to storage
+    await this.savePrompts();
+    
+    // Close modal and clear inputs
     this.closeModal('promptModal');
-    this.renderPromptGrid();
+    
+    // Re-render the grid and make sure we're showing the right folder
+    if (this.currentFolder === 'all' || 
+        this.currentFolder === 'recent' || 
+        (this.currentPromptId && this.currentFolder === folderId)) {
+      this.renderPromptGrid();
+    } else {
+      // If we're in a different folder, switch to "all" to show the new prompt
+      this.selectFolder('all');
+    }
+    
+    this.showNotification(this.currentPromptId ? 'Prompt updated successfully' : 'Prompt created successfully');
+    this.currentPromptId = null;
   }
   
   /**
@@ -730,70 +777,102 @@ class PromptVault {
     if (!prompt) return;
     
     try {
-      // Find all tabs with supported platforms
-      const tabs = await new Promise(resolve => {
+      // Find ChatGPT tabs first
+      const chatGptTabs = await new Promise(resolve => {
         chrome.tabs.query({
           url: [
             '*://chat.openai.com/*',
-            '*://chatgpt.com/*',
-            '*://claude.ai/*',
-            '*://grok.x.ai/*'
+            '*://chatgpt.com/*'
           ]
         }, resolve);
       });
       
-      if (tabs.length === 0) {
-        this.showNotification('No compatible AI chat tabs found. Please open ChatGPT, Claude, or Grok in a new tab.', 'error');
+      // If no ChatGPT tabs found, try other supported platforms
+      if (chatGptTabs.length === 0) {
+        const otherTabs = await new Promise(resolve => {
+          chrome.tabs.query({
+            url: [
+              '*://claude.ai/*',
+              '*://grok.x.ai/*'
+            ]
+          }, resolve);
+        });
+        
+        if (otherTabs.length === 0) {
+          this.showNotification('No compatible AI chat tabs found. Please open ChatGPT, Claude, or Grok in a new tab.', 'error');
+          return;
+        }
+        
+        // Sort by most recently active
+        otherTabs.sort((a, b) => b.lastAccessed - a.lastAccessed);
+        const targetTab = otherTabs[0];
+        
+        // Determine platform for better user feedback
+        const platform = targetTab.url.includes('claude.ai') ? 'Claude' : 'Grok';
+        
+        // Send message to the content script
+        this.sendMessageToTab(targetTab, prompt, platform);
         return;
       }
       
-      // Use the most recently active tab if there are multiple options
-      tabs.sort((a, b) => b.lastAccessed - a.lastAccessed);
-      const targetTab = tabs[0];
-      
-      // Track if this is the first import attempt
-      const importAttempt = prompt.importAttempt || 0;
-      
-      // Update the prompt in storage with the latest import attempt
-      const promptIndex = this.prompts.findIndex(p => p.id === this.currentPromptId);
-      if (promptIndex !== -1) {
-        this.prompts[promptIndex].importAttempt = importAttempt + 1;
-        this.prompts[promptIndex].lastModified = new Date().toISOString();
-        await this.savePrompts();
-      }
-      
-      // Send message to the content script
-      chrome.tabs.sendMessage(
-        targetTab.id,
-        {
-          action: 'insertPrompt',
-          prompt: prompt.text,
-          attachments: prompt.attachments || []
-        },
-        response => {
-          if (chrome.runtime.lastError) {
-            console.error('Error sending message:', chrome.runtime.lastError);
-            this.showNotification('Error communicating with AI chat tab. Try refreshing the page.', 'error');
-            return;
-          }
-          
-          console.log('Import response:', response);
-          
-          if (response && response.success) {
-            this.showNotification(response.message || 'Prompt imported successfully');
-            
-            // Switch to the tab
-            chrome.tabs.update(targetTab.id, { active: true });
-          } else {
-            const errorMsg = response ? response.message : 'Unknown error';
-            this.showNotification(`Import failed: ${errorMsg}`, 'error');
-          }
-        }
-      );
+      // Prefer ChatGPT as it's our focus
+      const targetTab = chatGptTabs[0];
+      this.sendMessageToTab(targetTab, prompt, 'ChatGPT');
     } catch (error) {
       console.error('Error importing prompt:', error);
       this.showNotification('Error importing prompt', 'error');
     }
+  }
+  
+  /**
+   * Send a message to a tab to insert a prompt
+   */
+  sendMessageToTab(tab, prompt, platformName) {
+    console.log(`Sending prompt to ${platformName} tab:`, tab.id);
+    
+    // Prepare full text in case of attachments
+    let fullText = prompt.text;
+    const hasAttachments = prompt.attachments && prompt.attachments.length > 0;
+    
+    // Send message to the content script
+    chrome.tabs.sendMessage(
+      tab.id,
+      {
+        action: 'insertPrompt',
+        prompt: fullText,
+        attachments: prompt.attachments || []
+      },
+      response => {
+        if (chrome.runtime.lastError) {
+          console.error('Error sending message:', chrome.runtime.lastError);
+          this.showNotification(`Error communicating with ${platformName} tab. Try refreshing the page.`, 'error');
+          return;
+        }
+        
+        console.log('Import response:', response);
+        
+        if (response && response.success) {
+          const successMsg = hasAttachments 
+            ? `Prompt with attachments inserted into ${platformName}` 
+            : `Prompt inserted into ${platformName}`;
+          
+          this.showNotification(successMsg);
+          
+          // Track the import in the prompt data
+          const promptIndex = this.prompts.findIndex(p => p.id === prompt.id);
+          if (promptIndex !== -1) {
+            this.prompts[promptIndex].lastModified = new Date().toISOString();
+            this.savePrompts();
+          }
+          
+          // Switch to the target tab
+          chrome.tabs.update(tab.id, { active: true });
+        } else {
+          const errorMsg = response ? response.message : 'Unknown error';
+          this.showNotification(`Import failed: ${errorMsg}`, 'error');
+        }
+      }
+    );
   }
   
   /**
@@ -812,7 +891,7 @@ class PromptVault {
   }
 }
 
-// Initialize the PromptVault when the document is loaded
+// Initialize the Promptr when the document is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  new PromptVault();
+  new Promptr();
 });

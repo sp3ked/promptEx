@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "PromptVault",
+  "name": "Promptr",
   "version": "1.0",
   "description": "Save, manage, and reuse prompts for AI chat platforms with attached context",
   "permissions": [
@@ -17,7 +17,7 @@
     "https://grok.x.ai/*"
   ],
   "action": {
-    "default_title": "PromptVault",
+    "default_title": "Promptr",
     "default_popup": "popup.html"
   },
   "content_scripts": [{
