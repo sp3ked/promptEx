@@ -24,9 +24,18 @@ class Promptr {
     await this.loadPrompts();
     await this.loadFolders();
     this.setupEventListeners();
-    this.renderPromptGrid();
+    
+    // Make sure to render prompts immediately
     this.renderFolders();
+    this.renderPromptGrid();
     this.selectFolder('all');
+    
+    // Force immediate display of prompts by showing the "all" folder
+    document.querySelectorAll('#folders .folder, #user-folders .folder').forEach(folder => {
+      folder.classList.toggle('active', folder.dataset.folder === 'all');
+    });
+    
+    // Make sure empty state is updated properly
     this.updateEmptyState();
   }
   
@@ -109,6 +118,11 @@ class Promptr {
       }));
       
       console.log('Loaded prompts:', this.prompts);
+      
+      // Immediately trigger a render after loading prompts
+      if (this.prompts.length > 0) {
+        this.renderPromptGrid();
+      }
     } catch (error) {
       console.error('Error loading prompts:', error);
       this.showNotification('Error loading prompts', 'error');
@@ -167,35 +181,42 @@ class Promptr {
    */
   renderPromptGrid() {
     const promptGrid = document.getElementById('promptGrid');
+    const promptList = document.getElementById('promptList');
+    
+    // Clear both containers
     promptGrid.innerHTML = '';
+    promptList.innerHTML = '';
     
-    // Set initial grid/list view class
-    promptGrid.classList.toggle('list-view', this.viewMode === 'list');
-    
-    // Set initial grid size
+    // Show/hide containers based on view mode
     if (this.viewMode === 'grid') {
-      this.updateGridSize();
+      promptGrid.style.display = 'grid';
+      promptList.style.display = 'none';
+    } else {
+      promptGrid.style.display = 'none';
+      promptList.style.display = 'flex';
     }
     
     let filteredPrompts = [...this.prompts]; // Create a copy to avoid modifying original array
     
-    // Filter prompts based on current folder
-    if (this.currentFolder === 'favorites') {
-      filteredPrompts = filteredPrompts.filter(prompt => prompt.favorite);
-    } else if (this.currentFolder === 'recent') {
-      // Sort by last modified and take most recent 10
-      filteredPrompts.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
-      filteredPrompts = filteredPrompts.slice(0, 10);
-    } else if (this.currentFolder !== 'all') {
-      // Filter by folder name
-      filteredPrompts = filteredPrompts.filter(prompt => prompt.folder === this.currentFolder);
+    // Filter by folder
+    if (this.currentFolder !== 'all') {
+      if (this.currentFolder === 'favorites') {
+        filteredPrompts = filteredPrompts.filter(p => p.favorite);
+      } else if (this.currentFolder === 'recent') {
+        // Sort by last modified date and take the top 10
+        filteredPrompts = [...filteredPrompts].sort((a, b) => {
+          return new Date(b.lastModified || 0) - new Date(a.lastModified || 0);
+        }).slice(0, 10);
+      } else {
+        filteredPrompts = filteredPrompts.filter(p => p.folder === this.currentFolder);
+      }
     }
     
-    // Sort prompts by last modified date for consistent ordering
-    filteredPrompts.sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+    // Sort by last modified date
+    filteredPrompts.sort((a, b) => new Date(b.lastModified || 0) - new Date(a.lastModified || 0));
     
-    // Check for search filter
-    const searchTerm = document.getElementById('searchPrompts').value.toLowerCase();
+    // Apply search filter if there's a search term
+    const searchTerm = document.getElementById('searchPrompts').value.toLowerCase().trim();
     if (searchTerm) {
       filteredPrompts = filteredPrompts.filter(prompt => {
         return (
@@ -206,103 +227,184 @@ class Promptr {
       });
     }
     
-    console.log('Rendering prompts for folder:', this.currentFolder, 'count:', filteredPrompts.length);
+    // If no prompts to show, display empty state
+    if (filteredPrompts.length === 0) {
+      document.getElementById('emptyState').style.display = 'block';
+      return;
+    }
     
-    // Render each prompt card
+    document.getElementById('emptyState').style.display = 'none';
+    
+    // Render each prompt
     filteredPrompts.forEach(prompt => {
-      const card = document.createElement('div');
-      card.className = 'prompt-card';
-      card.dataset.id = prompt.id;
+      // Create card for grid view
+      const gridCard = this.createPromptCard(prompt, false);
+      promptGrid.appendChild(gridCard);
       
-      // Format the date to be more readable
-      const date = new Date(prompt.lastModified);
-      const formattedDate = date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      });
-      
-      // Create tags HTML
-      let tagsHtml = '';
-      if (prompt.tags && prompt.tags.length > 0) {
-        const tagsToShow = prompt.tags.slice(0, 2); // Show max 2 tags
-        tagsHtml = tagsToShow.map(tag => `<span class="tag">${tag}</span>`).join('');
-        
-        // If there are more tags, add a +N indicator
-        if (prompt.tags.length > 2) {
-          tagsHtml += `<span class="tag">+${prompt.tags.length - 2}</span>`;
-        }
-      }
-      
-      // Create file attachments indicator
-      const hasAttachments = prompt.attachments && prompt.attachments.length > 0;
-      const attachmentIndicator = hasAttachments ? 
-        `<span style="margin-left: 5px;">📎${prompt.attachments.length}</span>` : 
-        '';
-
-      // Get first 100 characters of prompt text
-      const previewText = prompt.text.length > 100 ? 
-        prompt.text.substring(0, 100) + '...' : 
-        prompt.text;
-
-      // Create favorite indicator if favorited
-      const favoriteIndicator = prompt.favorite ? 
-        `<span style="color: gold; margin-right: 6px;">⭐</span>` : 
-        '';
-      
-      card.innerHTML = `
-        <div class="card-title">
-          ${favoriteIndicator}${prompt.title}
-        </div>
-        <div class="card-content">${previewText}</div>
-        <div class="card-footer">
-          <div class="card-tags">
-            ${tagsHtml}
-          </div>
-          <div style="display: flex; align-items: center;">
-            ${formattedDate}
-            ${attachmentIndicator}
-          </div>
-        </div>
-        <div class="prompt-actions">
-          <button class="action-button" data-action="edit" title="Edit">
-            <span class="material-icons">edit</span>
-          </button>
-          <button class="action-button delete-button" data-action="delete" title="Delete">
-            <span class="material-icons">delete</span>
-          </button>
-        </div>
-      `;
-      
-      // Add click event to view the prompt
-      card.addEventListener('click', (e) => {
-        // Don't trigger view if clicking an action button
-        if (e.target.closest('.action-button')) return;
-        this.viewPrompt(prompt.id);
-      });
-      
-      // Add click events for action buttons
-      const editBtn = card.querySelector('[data-action="edit"]');
-      if (editBtn) {
-        editBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.editPrompt(prompt.id);
-        });
-      }
-      
-      const deleteBtn = card.querySelector('[data-action="delete"]');
-      if (deleteBtn) {
-        deleteBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.currentPromptId = prompt.id;
-          this.showDeleteModal();
-        });
-      }
-      
-      promptGrid.appendChild(card);
+      // Create card for list view
+      const listCard = this.createPromptCard(prompt, true);
+      promptList.appendChild(listCard);
     });
     
-    this.updateEmptyState();
+    // Check for text overflow and add ellipsis only when needed
+    setTimeout(() => {
+      // Add ellipsis to overflowing titles
+      document.querySelectorAll('.card-title').forEach(title => {
+        if (title.scrollWidth > title.clientWidth) {
+          title.style.textOverflow = 'ellipsis';
+          title.style.whiteSpace = 'nowrap';
+        } else {
+          title.style.textOverflow = 'clip';
+          title.style.whiteSpace = 'normal';
+        }
+      });
+      
+      // Add ellipsis to overflowing content
+      document.querySelectorAll('.card-content').forEach(content => {
+        if (content.scrollHeight > content.clientHeight) {
+          content.style.textOverflow = 'ellipsis';
+        } else {
+          content.style.textOverflow = 'clip';
+        }
+      });
+      
+      // Remove ellipsis from dates - they should wrap if needed
+      document.querySelectorAll('.card-date').forEach(date => {
+        date.style.textOverflow = 'clip';
+        date.style.whiteSpace = 'normal';
+      });
+    }, 0);
+  }
+  
+  /**
+   * Create a prompt card element
+   * @param {Object} prompt - The prompt data
+   * @param {Boolean} isList - Whether this is for list view
+   * @returns {HTMLElement} - The card element
+   */
+  createPromptCard(prompt, isList = false) {
+    const card = document.createElement('div');
+    card.className = 'prompt-card';
+    card.dataset.id = prompt.id;
+    
+    // Format the date
+    const date = new Date(prompt.lastModified || prompt.createdAt);
+    const formattedDate = date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: isList ? undefined : 'numeric' // Shorter date for list view
+    });
+    
+    // Create title element with favorite indicator
+    const title = document.createElement('div');
+    title.className = 'card-title';
+    if (prompt.favorite) {
+      const star = document.createElement('span');
+      star.innerHTML = '★ ';
+      star.style.color = 'gold';
+      title.appendChild(star);
+    }
+    const titleText = document.createTextNode(prompt.title);
+    title.appendChild(titleText);
+    
+    // Create content element - don't truncate with ellipsis by default
+    const content = document.createElement('div');
+    content.className = 'card-content';
+    content.textContent = prompt.text;
+    
+    // Create footer element
+    const footer = document.createElement('div');
+    footer.className = 'card-footer';
+    
+    // Create tags container
+    const tags = document.createElement('div');
+    tags.className = 'card-tags';
+    
+    // Add tags if they exist - limit to 1 for list view
+    if (prompt.tags && prompt.tags.length > 0) {
+      const tagsToShow = isList ? prompt.tags.slice(0, 1) : prompt.tags.slice(0, 3);
+      tagsToShow.forEach(tag => {
+        const tagElement = document.createElement('span');
+        tagElement.className = 'tag';
+        tagElement.textContent = tag;
+        tags.appendChild(tagElement);
+      });
+      
+      // Show +X more if there are more tags
+      const remaining = prompt.tags.length - tagsToShow.length;
+      if (remaining > 0) {
+        const moreElement = document.createElement('span');
+        moreElement.className = 'tag';
+        moreElement.textContent = `+${remaining}`;
+        tags.appendChild(moreElement);
+      }
+    }
+    
+    // Add date to footer
+    const dateElement = document.createElement('div');
+    dateElement.className = 'card-date';
+    dateElement.textContent = formattedDate;
+    
+    // Add attachments indicator if there are files
+    if (prompt.attachments && prompt.attachments.length > 0) {
+      const attachmentIndicator = document.createElement('span');
+      attachmentIndicator.innerHTML = ` 📎${prompt.attachments.length}`;
+      dateElement.appendChild(attachmentIndicator);
+    }
+    
+    footer.appendChild(tags);
+    footer.appendChild(dateElement);
+    
+    // Create prompt actions
+    const actions = document.createElement('div');
+    actions.className = 'prompt-actions';
+    
+    // Favorite button
+    const favoriteBtn = document.createElement('button');
+    favoriteBtn.className = 'action-button favorite-btn';
+    favoriteBtn.innerHTML = prompt.favorite ? '★' : '☆';
+    favoriteBtn.title = prompt.favorite ? 'Remove from Favorites' : 'Add to Favorites';
+    favoriteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.currentPromptId = prompt.id;
+      this.toggleFavorite();
+    });
+    
+    // Edit button
+    const editBtn = document.createElement('button');
+    editBtn.className = 'action-button edit-btn';
+    editBtn.innerHTML = '<span class="material-icons">edit</span>';
+    editBtn.title = 'Edit Prompt';
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.editPrompt(prompt.id);
+    });
+    
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'action-button delete-btn';
+    deleteBtn.innerHTML = '<span class="material-icons">delete</span>';
+    deleteBtn.title = 'Delete Prompt';
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.currentPromptId = prompt.id;
+      this.showDeleteModal();
+    });
+    
+    actions.appendChild(favoriteBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    
+    // Add all elements to card
+    card.appendChild(title);
+    card.appendChild(content);
+    card.appendChild(footer);
+    card.appendChild(actions);
+    
+    // Add click event to view the prompt
+    card.addEventListener('click', () => this.viewPrompt(prompt.id));
+    
+    return card;
   }
   
   /**
@@ -388,7 +490,12 @@ class Promptr {
     
     // Re-render the prompt grid with the selected folder
     this.renderPromptGrid();
-    this.updateEmptyState();
+    
+    // Ensure empty state is properly updated
+    document.getElementById('emptyState').style.display = 
+      document.querySelector('#promptGrid').children.length === 0 && 
+      document.querySelector('#promptList').children.length === 0 ? 
+      'block' : 'none';
   }
   
   /**
@@ -755,16 +862,27 @@ class Promptr {
     const promptIndex = this.prompts.findIndex(p => p.id === this.currentPromptId);
     if (promptIndex === -1) return;
     
+    // Toggle favorite status
     this.prompts[promptIndex].favorite = !this.prompts[promptIndex].favorite;
+    
+    // Update lastModified
+    this.prompts[promptIndex].lastModified = new Date().toISOString();
+    
+    // Save to storage
     await this.savePrompts();
     
-    // Update favorite button text
+    // Update UI if view modal is open
     const favoriteBtn = document.getElementById('favoritePromptBtn');
-    favoriteBtn.textContent = this.prompts[promptIndex].favorite ? 
-      '✩ Unfavorite' : 
-      '⭐ Favorite';
+    if (favoriteBtn) {
+      favoriteBtn.textContent = this.prompts[promptIndex].favorite ? 
+        '✩ Unfavorite' : 
+        '⭐ Favorite';
+    }
     
+    // Re-render the prompt grid to update the UI
     this.renderPromptGrid();
+    
+    // Show notification
     this.showNotification(
       this.prompts[promptIndex].favorite ? 
       'Added to favorites' : 
@@ -935,6 +1053,9 @@ class Promptr {
     
     // Add/remove class to body to adjust main content
     document.body.classList.toggle('sidebar-hidden', this.sidebarCollapsed);
+    
+    // Re-render the current view to ensure proper layout
+    this.renderPromptGrid();
   }
   
   /**
@@ -947,30 +1068,27 @@ class Promptr {
     document.getElementById('gridViewBtn').classList.toggle('active', mode === 'grid');
     document.getElementById('listViewBtn').classList.toggle('active', mode === 'list');
     
-    // Update grid class
-    const promptGrid = document.getElementById('promptGrid');
-    promptGrid.classList.toggle('list-view', mode === 'list');
-    
-    // Show/hide grid size control
-    const gridSizeControl = document.querySelector('.grid-size-control');
-    gridSizeControl.style.display = mode === 'grid' ? 'block' : 'none';
-    
-    // Re-render the grid to update layout
+    // Re-render the prompt grid with the new view mode
     this.renderPromptGrid();
   }
   
   /**
-   * Update the grid size
+   * Update the layout based on sidebar state and current view
+   */
+  updateLayout() {
+    // We don't need to do anything special anymore - the CSS handles the grid columns
+    // This is kept for future layout adjustments if needed
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) {
+      mainContent.style.width = this.sidebarCollapsed ? '100%' : 'calc(100% - 260px)';
+    }
+  }
+  
+  /**
+   * Update the grid size - this is now handled by CSS
    */
   updateGridSize() {
-    const promptGrid = document.getElementById('promptGrid');
-    // Calculate the width based on the number of items per row
-    // Subtract some pixels for gaps
-    const containerWidth = promptGrid.offsetWidth;
-    const gapSize = 16; // This should match the gap size in CSS
-    const itemWidth = (containerWidth - (gapSize * (this.gridSize - 1))) / this.gridSize;
-    
-    promptGrid.style.gridTemplateColumns = `repeat(${this.gridSize}, minmax(0, 1fr))`;
+    // The grid sizing is now handled by CSS
   }
 }
 
