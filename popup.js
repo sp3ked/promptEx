@@ -10,6 +10,9 @@ class Promptr {
     this.folders = [];
     this.attachments = [];
     this.currentFolder = 'all';
+    this.viewMode = 'grid';
+    this.gridSize = 3; // Number of items per row instead of pixel width
+    this.sidebarCollapsed = false;
     
     this.init();
   }
@@ -69,6 +72,20 @@ class Promptr {
     
     // File attachment
     document.getElementById('fileAttachment').addEventListener('change', (e) => this.handleFileSelect(e));
+    
+    // Sidebar collapse/expand
+    document.getElementById('sidebarCollapseBtn').addEventListener('click', () => this.toggleSidebar());
+    document.getElementById('sidebarToggleBtn').addEventListener('click', () => this.toggleSidebar());
+    
+    // View toggle buttons
+    document.getElementById('gridViewBtn').addEventListener('click', () => this.setViewMode('grid'));
+    document.getElementById('listViewBtn').addEventListener('click', () => this.setViewMode('list'));
+    
+    // Grid size slider
+    document.getElementById('gridSizeSlider').addEventListener('input', (e) => {
+      this.gridSize = parseInt(e.target.value);
+      this.updateGridSize();
+    });
   }
   
   /**
@@ -152,6 +169,14 @@ class Promptr {
     const promptGrid = document.getElementById('promptGrid');
     promptGrid.innerHTML = '';
     
+    // Set initial grid/list view class
+    promptGrid.classList.toggle('list-view', this.viewMode === 'list');
+    
+    // Set initial grid size
+    if (this.viewMode === 'grid') {
+      this.updateGridSize();
+    }
+    
     let filteredPrompts = [...this.prompts]; // Create a copy to avoid modifying original array
     
     // Filter prompts based on current folder
@@ -189,14 +214,6 @@ class Promptr {
       card.className = 'prompt-card';
       card.dataset.id = prompt.id;
       
-      // Create favorite indicator if favorited
-      const favoriteIndicator = prompt.favorite ? '<span style="position: absolute; top: 8px; left: 8px; color: gold;">⭐</span>' : '';
-      
-      // Get first 100 characters of prompt text
-      const previewText = prompt.text.length > 100 ? 
-        prompt.text.substring(0, 100) + '...' : 
-        prompt.text;
-        
       // Format the date to be more readable
       const date = new Date(prompt.lastModified);
       const formattedDate = date.toLocaleDateString('en-US', { 
@@ -222,14 +239,21 @@ class Promptr {
       const attachmentIndicator = hasAttachments ? 
         `<span style="margin-left: 5px;">📎${prompt.attachments.length}</span>` : 
         '';
+
+      // Get first 100 characters of prompt text
+      const previewText = prompt.text.length > 100 ? 
+        prompt.text.substring(0, 100) + '...' : 
+        prompt.text;
+
+      // Create favorite indicator if favorited
+      const favoriteIndicator = prompt.favorite ? 
+        `<span style="color: gold; margin-right: 6px;">⭐</span>` : 
+        '';
       
       card.innerHTML = `
-        ${favoriteIndicator}
-        <div class="prompt-actions">
-          <button class="action-button" data-action="edit" title="Edit">✏️</button>
-          <button class="action-button delete-button" data-action="delete" title="Delete">🗑️</button>
+        <div class="card-title">
+          ${favoriteIndicator}${prompt.title}
         </div>
-        <div class="card-title">${prompt.title}</div>
         <div class="card-content">${previewText}</div>
         <div class="card-footer">
           <div class="card-tags">
@@ -239,6 +263,14 @@ class Promptr {
             ${formattedDate}
             ${attachmentIndicator}
           </div>
+        </div>
+        <div class="prompt-actions">
+          <button class="action-button" data-action="edit" title="Edit">
+            <span class="material-icons">edit</span>
+          </button>
+          <button class="action-button delete-button" data-action="delete" title="Delete">
+            <span class="material-icons">delete</span>
+          </button>
         </div>
       `;
       
@@ -888,6 +920,57 @@ class Promptr {
     setTimeout(() => {
       notification.style.display = 'none';
     }, 3000);
+  }
+  
+  /**
+   * Toggle sidebar visibility
+   */
+  toggleSidebar() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    
+    sidebar.classList.toggle('collapsed', this.sidebarCollapsed);
+    sidebarToggleBtn.style.display = this.sidebarCollapsed ? 'flex' : 'none';
+    
+    // Add/remove class to body to adjust main content
+    document.body.classList.toggle('sidebar-hidden', this.sidebarCollapsed);
+  }
+  
+  /**
+   * Set the view mode (grid or list)
+   */
+  setViewMode(mode) {
+    this.viewMode = mode;
+    
+    // Update button states
+    document.getElementById('gridViewBtn').classList.toggle('active', mode === 'grid');
+    document.getElementById('listViewBtn').classList.toggle('active', mode === 'list');
+    
+    // Update grid class
+    const promptGrid = document.getElementById('promptGrid');
+    promptGrid.classList.toggle('list-view', mode === 'list');
+    
+    // Show/hide grid size control
+    const gridSizeControl = document.querySelector('.grid-size-control');
+    gridSizeControl.style.display = mode === 'grid' ? 'block' : 'none';
+    
+    // Re-render the grid to update layout
+    this.renderPromptGrid();
+  }
+  
+  /**
+   * Update the grid size
+   */
+  updateGridSize() {
+    const promptGrid = document.getElementById('promptGrid');
+    // Calculate the width based on the number of items per row
+    // Subtract some pixels for gaps
+    const containerWidth = promptGrid.offsetWidth;
+    const gapSize = 16; // This should match the gap size in CSS
+    const itemWidth = (containerWidth - (gapSize * (this.gridSize - 1))) / this.gridSize;
+    
+    promptGrid.style.gridTemplateColumns = `repeat(${this.gridSize}, minmax(0, 1fr))`;
   }
 }
 
