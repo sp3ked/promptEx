@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Promptr</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
       --primary-color: #2563eb;
@@ -117,7 +118,9 @@
       display: flex;
       align-items: center;
       color: #ececf1;
-      transition: background-color 0.2s ease;
+      transition: all 0.2s ease;
+      user-select: none;
+      position: relative;
     }
     
     .folder:hover {
@@ -128,10 +131,63 @@
       background-color: rgba(37, 99, 235, 0.15);
       color: var(--primary-color);
     }
-    
-    .folder-icon {
+
+    .folder.dragging {
+      opacity: 0.5;
+      background-color: rgba(37, 99, 235, 0.1);
+    }
+
+    .folder-section-header {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin: 20px 0 8px;
+      padding: 0 12px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .folder-section-header i {
+      font-size: 14px;
+    }
+
+    .folder i {
       margin-right: 10px;
       opacity: 0.8;
+      font-size: 16px;
+    }
+
+    .folder-actions {
+      position: absolute;
+      right: 8px;
+      display: none;
+      gap: 4px;
+    }
+
+    .folder:hover .folder-actions {
+      display: flex;
+    }
+
+    .folder-action-btn {
+      background: transparent;
+      color: var(--text-light);
+      padding: 4px;
+      margin: 0;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .folder-action-btn:hover {
+      background: var(--hover-color);
+      color: var(--text-color);
+    }
+
+    .drag-over {
+      background-color: rgba(37, 99, 235, 0.1);
+      border: 2px dashed var(--primary-color);
+      border-radius: 6px;
     }
     
     .create-folder {
@@ -704,31 +760,39 @@
 </head>
 <body>
   <!-- Sidebar -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <h3>Promptr</h3>
-      <button id="sidebarCollapseBtn" class="icon-button">
-        <span class="material-icons">close</span>
+      <h2>Folders</h2>
+      <button class="icon-button" id="sidebarCollapseBtn">
+        <i class="fas fa-chevron-left"></i>
       </button>
     </div>
-    
+
+    <!-- Default folders -->
     <div id="folders">
       <div class="folder active" data-folder="all">
-        <span class="folder-icon">📁</span> All Prompts
+        <i class="fas fa-folder"></i> All Prompts
       </div>
       <div class="folder" data-folder="favorites">
-        <span class="folder-icon">⭐</span> Favorites
+        <i class="fas fa-star"></i> Favorites
       </div>
       <div class="folder" data-folder="recent">
-        <span class="folder-icon">🕒</span> Recent
+        <i class="fas fa-clock"></i> Recent
       </div>
     </div>
-    
-    <div id="user-folders">
-      <!-- User created folders will be added here -->
-    </div>
-    
-    <button class="create-folder" id="createFolderBtn">+ Create Folder</button>
+
+    <!-- Recent folders section -->
+    <div id="recent-folders"></div>
+
+    <!-- Favorite folders section -->
+    <div id="favorite-folders"></div>
+
+    <!-- User folders section -->
+    <div id="user-folders"></div>
+
+    <button id="createFolderBtn" class="create-folder">
+      <i class="fas fa-plus"></i> New Folder
+    </button>
   </div>
   
   <!-- Main Content -->
@@ -852,10 +916,10 @@
       </div>
       
       <label for="folderName">Folder Name:</label>
-      <input type="text" id="folderName" placeholder="Enter a name for your folder">
+      <input type="text" id="folderName" placeholder="Enter a name for your folder" autofocus>
       
       <div style="margin-top: 15px;">
-        <button id="saveFolderBtn">Create</button>
+        <button id="saveFolderBtn" class="primary-button">Create</button>
         <button id="cancelFolderBtn">Cancel</button>
       </div>
     </div>

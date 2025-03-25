@@ -13,6 +13,8 @@ class Promptr {
     this.viewMode = 'grid';
     this.gridSize = 3; // Number of items per row instead of pixel width
     this.sidebarCollapsed = false;
+    this.recentFolders = []; // Track recently used folders
+    this.favoriteFolders = []; // Track favorite folders
     
     this.init();
   }
@@ -73,6 +75,17 @@ class Promptr {
     document.getElementById('closeFolderModal').addEventListener('click', () => this.closeModal('folderModal'));
     document.getElementById('saveFolderBtn').addEventListener('click', () => this.saveFolder());
     document.getElementById('cancelFolderBtn').addEventListener('click', () => this.closeModal('folderModal'));
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+      const modals = ['promptModal', 'folderModal', 'deleteModal', 'viewPromptModal'];
+      modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (e.target === modal) {
+          this.closeModal(modalId);
+        }
+      });
+    });
     
     // Folder selection - add event listeners for default folders too
     document.querySelectorAll('#folders .folder, #user-folders .folder').forEach(folder => {
@@ -411,54 +424,182 @@ class Promptr {
    * Render user folders
    */
   renderFolders() {
-    const folderContainer = document.getElementById('user-folders');
-    folderContainer.innerHTML = '';
+    const userFoldersContainer = document.getElementById('user-folders');
+    const recentFoldersContainer = document.getElementById('recent-folders');
+    const favoriteFoldersContainer = document.getElementById('favorite-folders');
     
-    // Sort folders alphabetically
-    const sortedFolders = [...this.folders].sort((a, b) => a.name.localeCompare(b.name));
-    
-    // First remove old event listeners from default folders
-    document.querySelectorAll('#folders .folder').forEach(folder => {
-      const newFolder = folder.cloneNode(true);
-      folder.parentNode.replaceChild(newFolder, folder);
-      newFolder.addEventListener('click', () => this.selectFolder(newFolder.dataset.folder));
+    // Clear existing content
+    userFoldersContainer.innerHTML = '';
+    recentFoldersContainer.innerHTML = '';
+    favoriteFoldersContainer.innerHTML = '';
+
+    // Render recent section first
+    const recentHeader = document.createElement('div');
+    recentHeader.className = 'folder-section-header';
+    recentHeader.innerHTML = '<i class="fas fa-clock"></i> Recent';
+    recentFoldersContainer.appendChild(recentHeader);
+
+    this.recentFolders.slice(0, 5).forEach(folder => {
+      const folderElement = this.createFolderElement(folder);
+      recentFoldersContainer.appendChild(folderElement);
     });
+
+    // Render favorites section
+    const favoritesHeader = document.createElement('div');
+    favoritesHeader.className = 'folder-section-header';
+    favoritesHeader.innerHTML = '<i class="fas fa-star"></i> Favorites';
+    favoriteFoldersContainer.appendChild(favoritesHeader);
+
+    this.favoriteFolders.forEach(folder => {
+      const folderElement = this.createFolderElement(folder);
+      favoriteFoldersContainer.appendChild(folderElement);
+    });
+
+    // Render user folders
+    const userHeader = document.createElement('div');
+    userHeader.className = 'folder-section-header';
+    userHeader.innerHTML = '<i class="fas fa-folder"></i> Folders';
+    userFoldersContainer.appendChild(userHeader);
+
+    // Sort folders by order
+    const sortedFolders = [...this.folders].sort((a, b) => (a.order || 0) - (b.order || 0));
     
-    // Add user folders
     sortedFolders.forEach(folder => {
-      const folderElement = document.createElement('div');
-      folderElement.className = `folder ${this.currentFolder === folder.id ? 'active' : ''}`;
-      folderElement.dataset.folder = folder.id;
-      folderElement.innerHTML = `
-        <span class="folder-icon">📁</span> ${folder.name}
-      `;
-      
-      folderElement.addEventListener('click', () => this.selectFolder(folder.id));
-      folderContainer.appendChild(folderElement);
+      const folderElement = this.createFolderElement(folder);
+      userFoldersContainer.appendChild(folderElement);
     });
-    
-    // Update folder dropdown in prompt modal
-    const folderSelect = document.getElementById('promptFolder');
-    
-    // Save the currently selected option to restore it later
-    const selectedValue = folderSelect.value;
-    
-    // Clear all options except the "None" option
-    while (folderSelect.options.length > 1) {
-      folderSelect.remove(1);
+
+    this.initializeDragAndDrop();
+  }
+
+  createFolderElement(folder) {
+    const folderElement = document.createElement('div');
+    folderElement.className = 'folder';
+    folderElement.dataset.folder = folder.id;
+    folderElement.draggable = true;
+
+    // Add active class if this is the current folder
+    if (folder.id === this.currentFolder) {
+      folderElement.classList.add('active');
     }
+
+    const icon = document.createElement('i');
+    icon.className = folder.favorite ? 'fas fa-folder-star' : 'fas fa-folder';
     
-    // Add options for each folder
-    sortedFolders.forEach(folder => {
-      const option = document.createElement('option');
-      option.value = folder.id;
-      option.textContent = folder.name;
-      folderSelect.appendChild(option);
+    const name = document.createElement('span');
+    name.textContent = folder.name;
+
+    const actions = document.createElement('div');
+    actions.className = 'folder-actions';
+    
+    const favoriteBtn = document.createElement('button');
+    favoriteBtn.innerHTML = '<i class="fas fa-star"></i>';
+    favoriteBtn.className = 'folder-action-btn';
+    favoriteBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.toggleFolderFavorite(folder.id);
+    };
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteBtn.className = 'folder-action-btn';
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      this.deleteFolder(folder.id);
+    };
+
+    actions.appendChild(favoriteBtn);
+    actions.appendChild(deleteBtn);
+    
+    folderElement.appendChild(icon);
+    folderElement.appendChild(name);
+    folderElement.appendChild(actions);
+
+    // Add click handler for folder selection
+    folderElement.addEventListener('click', () => this.selectFolder(folder.id));
+
+    return folderElement;
+  }
+
+  initializeDragAndDrop() {
+    const folderElements = document.querySelectorAll('.folder');
+    const dropZones = document.querySelectorAll('#user-folders, #favorite-folders');
+
+    folderElements.forEach(folder => {
+      folder.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', folder.dataset.folder);
+        folder.classList.add('dragging');
+      });
+
+      folder.addEventListener('dragend', () => {
+        folder.classList.remove('dragging');
+      });
     });
-    
-    // Restore the previously selected value if it exists in the new options
-    if (selectedValue && [...folderSelect.options].some(opt => opt.value === selectedValue)) {
-      folderSelect.value = selectedValue;
+
+    dropZones.forEach(zone => {
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('drag-over');
+      });
+
+      zone.addEventListener('dragleave', () => {
+        zone.classList.remove('drag-over');
+      });
+
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const folderId = e.dataTransfer.getData('text/plain');
+        const targetZone = zone.id;
+        
+        if (targetZone === 'favorite-folders') {
+          this.addToFavorites(folderId);
+        } else {
+          this.removeFromFavorites(folderId);
+        }
+      });
+    });
+  }
+
+  async toggleFolderFavorite(folderId) {
+    const folder = this.folders.find(f => f.id === folderId);
+    if (folder) {
+      folder.favorite = !folder.favorite;
+      if (folder.favorite) {
+        this.favoriteFolders.push(folder);
+      } else {
+        this.favoriteFolders = this.favoriteFolders.filter(f => f.id !== folderId);
+      }
+      await this.saveFolders();
+      this.renderFolders();
+    }
+  }
+
+  async deleteFolder(folderId) {
+    if (confirm('Are you sure you want to delete this folder? All prompts in this folder will be moved to "Uncategorized".')) {
+      // Move prompts to uncategorized
+      this.prompts.forEach(prompt => {
+        if (prompt.folder === folderId) {
+          prompt.folder = 'none';
+        }
+      });
+      
+      // Remove folder
+      this.folders = this.folders.filter(f => f.id !== folderId);
+      this.favoriteFolders = this.favoriteFolders.filter(f => f.id !== folderId);
+      this.recentFolders = this.recentFolders.filter(f => f.id !== folderId);
+      
+      await this.saveFolders();
+      await this.savePrompts();
+      this.renderFolders();
+      this.renderPromptGrid();
+    }
+  }
+
+  updateRecentFolders(folderId) {
+    const folder = this.folders.find(f => f.id === folderId);
+    if (folder) {
+      this.recentFolders = [folder, ...this.recentFolders.filter(f => f.id !== folderId)].slice(0, 5);
     }
   }
   
@@ -548,9 +689,24 @@ class Promptr {
    * Show the folder creation modal
    */
   showFolderModal() {
-    document.getElementById('folderName').value = '';
-    document.getElementById('folderModal').style.display = 'block';
-    document.getElementById('folderName').focus();
+    const modal = document.getElementById('folderModal');
+    const folderNameInput = document.getElementById('folderName');
+    
+    // Clear any previous value
+    folderNameInput.value = '';
+    
+    // Show the modal
+    modal.style.display = 'block';
+    
+    // Focus the input
+    folderNameInput.focus();
+
+    // Add enter key handler
+    folderNameInput.onkeyup = (e) => {
+      if (e.key === 'Enter') {
+        this.saveFolder();
+      }
+    };
   }
   
   /**
@@ -567,18 +723,23 @@ class Promptr {
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.style.display = 'none';
-    }
-    
-    // Clear any input fields to prevent data bleeding between sessions
-    if (modalId === 'promptModal') {
-      document.getElementById('promptTitle').value = '';
-      document.getElementById('promptText').value = '';
-      document.getElementById('promptTags').value = '';
-      document.getElementById('promptFolder').value = 'none';
-      document.getElementById('attachmentList').innerHTML = '';
-      this.attachments = [];
-    } else if (modalId === 'folderModal') {
-      document.getElementById('folderName').value = '';
+      
+      // Clear any input fields to prevent data bleeding between sessions
+      if (modalId === 'promptModal') {
+        document.getElementById('promptTitle').value = '';
+        document.getElementById('promptText').value = '';
+        document.getElementById('promptTags').value = '';
+        document.getElementById('promptFolder').value = 'none';
+        document.getElementById('attachmentList').innerHTML = '';
+        this.attachments = [];
+      } else if (modalId === 'folderModal') {
+        const folderNameInput = document.getElementById('folderName');
+        if (folderNameInput) {
+          folderNameInput.value = '';
+          // Remove any existing keyup handler
+          folderNameInput.onkeyup = null;
+        }
+      }
     }
   }
   
@@ -649,46 +810,17 @@ class Promptr {
       attachmentList.appendChild(fileItem);
     });
   }
-  
-  /**
-   * Save a folder
-   */
+ 
   async saveFolder() {
-    const folderNameInput = document.getElementById('folderName');
-    const folderName = folderNameInput.value.trim();
-    
+    const folderName = document.getElementById('folderName').value.trim();
     if (!folderName) {
-      this.showNotification('Folder name cannot be empty', 'error');
+      this.showNotification('Please enter a folder name', 'error');
       return;
     }
-    
-    // Check for duplicate folder names
-    if (this.folders.some(folder => folder.name.toLowerCase() === folderName.toLowerCase())) {
-      this.showNotification('A folder with this name already exists', 'error');
-      return;
-    }
-    
-    // Create a new folder
-    const newFolder = {
-      id: 'folder_' + Date.now(),
-      name: folderName,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Add to folders array
-    this.folders.push(newFolder);
-    
-    // Save to storage
+    this.folders.push({ id: Date.now().toString(), name: folderName });
     await this.saveFolders();
-    
-    // Close modal and clear input
+    this.renderFolders();
     this.closeModal('folderModal');
-    
-    // Re-render folders and switch to the new folder
-    await this.renderFolders();
-    this.selectFolder(newFolder.id);
-    
-    this.showNotification('Folder created successfully');
   }
   
   /**
