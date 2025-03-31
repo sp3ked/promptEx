@@ -1,33 +1,25 @@
 {
-  "manifest_version": 3,
-  "name": "Promptr",
-  "version": "1.0",
-  "description": "Save, manage, and reuse prompts for AI chat platforms with attached context",
-  "permissions": [
-    "storage",
-    "activeTab",
-    "scripting",
-    "clipboardWrite",
-    "tabs"
-  ],
-  "host_permissions": [
-    "https://chat.openai.com/*",
-    "https://chatgpt.com/*",
-    "https://claude.ai/*",
-    "https://grok.x.ai/*"
-  ],
-  "action": {
-    "default_title": "Promptr",
-    "default_popup": "popup.html"
-  },
-  "content_scripts": [{
-    "matches": [
-      "https://chat.openai.com/*",
-      "https://chatgpt.com/*",
-      "https://claude.ai/*",
-      "https://grok.x.ai/*"
+    "manifest_version": 3,
+    "name": "Promptr",
+    "version": "1.0",
+    "description": "A modern prompt management tool with a beautiful side panel interface",
+    "permissions": [
+        "sidePanel",
+        "storage",
+        "clipboardWrite"
     ],
-    "js": ["content.js"],
-    "run_at": "document_idle"
-  }]
-} 
+    "action": {
+        "default_title": "Promptr"
+    },
+    "side_panel": {
+        "default_path": "sidepanel.js"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "icons": {
+        "16": "icons/icon.svg",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}
