@@ -1,9 +1,0 @@
-{
-    "name": "promptr-icons",
-    "version": "1.0.0",
-    "description": "Icon generator for Promptr extension",
-    "main": "convert_icons.js",
-    "dependencies": {
-        "canvas": "^2.11.2"
-    }
-}

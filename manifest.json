@@ -2,15 +2,15 @@
     "manifest_version": 3,
     "name": "Promptr",
     "version": "1.0",
-    "description": "A modern prompt management tool with a beautiful side panel interface",
+    "description": "Manage and inject prompts for AI chat platforms.",
     "permissions": [
-        "sidePanel",
         "storage",
-        "clipboardWrite",
-        "activeTab"
+        "sidePanel",
+        "activeTab",
+        "scripting"
     ],
     "action": {
-        "default_title": "Promptr"
+        "default_title": "Open Promptr"
     },
     "side_panel": {
         "default_path": "sidepanel.html"
@@ -21,12 +21,14 @@
     "content_scripts": [
         {
             "matches": [
-                "*://*.chatgpt.com/*",
-                "*://*.chat.openai.com/*",
-                "*://*.claude.ai/*",
-                "*://*.grok.x.ai/*"
+                "*://chatgpt.com/*",
+                "*://claude.ai/*",
+                "*://grok.x.ai/*"
             ],
-            "js": ["content.js"]
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_idle"
         }
     ],
     "icons": {

@@ -1,5 +1,4 @@
-// Handle extension icon click to open side panel
-chrome.action.onClicked.addListener((tab) => {
-    // Open the side panel
-    chrome.sidePanel.open({ windowId: tab.windowId });
+// Open the side panel on action click
+chrome.action.onClicked.addListener(async (tab) => {
+    await chrome.sidePanel.open({ windowId: tab.windowId });
 }); 

@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Promptr</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #ff4d4d;
-            --primary-hover: #ff3333;
-            --bg-color: #1a1a1a;
-            --text-color: #ffffff;
-            --border-color: #333333;
-            --card-bg: #2a2a2a;
-            --success-color: #4caf50;
-            --error-color: #f44336;
+            --primary-blue: #1E88E5;
+            --secondary-teal: #00ACC1;
+            --neutral-light-grey: #F5F5F5;
+            --neutral-medium-grey: #9E9E9E;
+            --neutral-dark-grey: #424242;
+            --white: #FFFFFF;
+            --success-green: #4CAF50;
+            --error-red: #F44336;
         }
 
         * {
@@ -22,41 +23,32 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.5;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--neutral-light-grey);
+            color: var(--neutral-dark-grey);
             width: 400px;
             height: 100vh;
             overflow: hidden;
         }
 
         .container {
-            padding: 20px;
+            padding: 16px;
             height: 100%;
             display: flex;
             flex-direction: column;
-            animation: slideIn 0.3s ease-out;
         }
 
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
         }
 
         .title {
             font-size: 24px;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
+            font-weight: 600;
+            color: var(--primary-blue);
         }
 
         .btn {
@@ -66,89 +58,108 @@
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 6px;
             font-size: 14px;
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
+            background-color: var(--primary-blue);
+            color: var(--white);
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-hover);
+            background-color: #1565C0;
         }
 
         .btn-secondary {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
+            background-color: var(--secondary-teal);
+            color: var(--white);
         }
 
         .btn-secondary:hover {
-            background-color: #333333;
+            background-color: #00838F;
+        }
+
+        .btn-tertiary {
+            background-color: var(--neutral-light-grey);
+            color: var(--neutral-dark-grey);
+            border: 1px solid #BDBDBD;
+        }
+
+        .btn-tertiary:hover {
+            background-color: #E0E0E0;
+        }
+
+        .btn-delete {
+            background-color: var(--error-red);
+            color: var(--white);
+        }
+
+        .btn-delete:hover {
+            background-color: #D32F2F;
         }
 
         .prompt-input-container {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .prompt-textarea {
             width: 100%;
-            min-height: 150px;
+            min-height: 100px;
             padding: 12px;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
+            background-color: var(--neutral-light-grey);
+            border: 1px solid #BDBDBD;
             border-radius: 8px;
-            color: var(--text-color);
-            font-size: 14px;
+            color: var(--neutral-dark-grey);
+            font-size: 15px;
             resize: vertical;
         }
 
         .prompt-textarea:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border: 2px solid var(--primary-blue);
+        }
+
+        .prompt-textarea::placeholder {
+            color: var(--neutral-medium-grey);
         }
 
         .prompt-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .prompts-container {
             flex: 1;
             overflow-y: auto;
-            margin-top: 16px;
+            margin-top: 8px;
         }
 
         .prompt-card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            border: 1px solid var(--border-color);
+            background-color: var(--white);
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
             transition: all 0.2s ease;
         }
 
         .prompt-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .prompt-title {
             font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--primary-color);
+            font-weight: 500;
+            color: var(--primary-blue);
+            margin-bottom: 4px;
         }
 
         .prompt-content {
-            font-size: 14px;
-            color: #cccccc;
-            margin-bottom: 12px;
+            font-size: 15px;
+            color: var(--neutral-dark-grey);
+            margin-bottom: 8px;
             white-space: pre-wrap;
             word-break: break-word;
         }
@@ -158,7 +169,17 @@
             justify-content: space-between;
             align-items: center;
             font-size: 12px;
-            color: #888888;
+            color: var(--neutral-medium-grey);
+        }
+
+        .prompt-meta .prompt-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .prompt-meta .btn {
+            padding: 6px 12px;
+            font-size: 12px;
         }
 
         .toast {
@@ -166,7 +187,7 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 12px 24 LOCKpx;
+            padding: 12px 24px;
             border-radius: 8px;
             font-size: 14px;
             opacity: 0;
@@ -180,13 +201,13 @@
         }
 
         .toast-success {
-            background-color: var(--success-color);
-            color: white;
+            background-color: var(--success-green);
+            color: var(--white);
         }
 
         .toast-error {
-            background-color: var(--error-color);
-            color: white;
+            background-color: var(--error-red);
+            color: var(--white);
         }
 
         ::-webkit-scrollbar {
@@ -194,55 +215,33 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: var(--bg-color);
+            background: var(--neutral-light-grey);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
+            background: #BDBDBD;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #444444;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
+            background: #9E9E9E;
         }
     </style>
     <script src="sidepanel.js"></script>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1 class="title">Promptr</h1>
-            <div class="actions">
-                <button class="btn btn-secondary" id="exportBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    Export
-                </button>
-                <button class="btn btn-secondary" id="importBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    Import
-                </button>
-            </div>
+            <button class="btn btn-secondary" id="newPromptBtn">New Prompt</button>
         </div>
 
         <div class="prompt-input-container">
-            <textarea class="prompt-textarea" id="promptInput" placeholder="Write your prompt here..."></textarea>
+            <textarea class="prompt-textarea" id="promptInput" placeholder="Enter your prompt here..."></textarea>
             <div class="prompt-actions">
-                <button class="btn btn-primary" id="sendPromptBtn">Send to LLM</button>
-                <button class="btn btn-secondary" id="savePromptBtn">Save Prompt</button>
-                <button class="btn btn-secondary" id="copyPromptBtn">Copy</button>
+                <button class="btn btn-secondary" id="attachFileBtn">Attach File</button>
+                <button class="btn btn-primary" id="savePromptBtn">Save Prompt</button>
             </div>
         </div>
 
@@ -250,4 +249,5 @@
     </div>
     <div class="toast" id="toast"></div>
 </body>
+
 </html>
