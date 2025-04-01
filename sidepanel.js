@@ -131,12 +131,28 @@ class PromptManager {
         this.attachFileBtn = document.getElementById('attachFileBtn');
         this.newPromptBtn = document.getElementById('newPromptBtn');
         this.toast = document.getElementById('toast');
+
+        // Delete confirmation modal elements
+        this.deleteModal = document.getElementById('deleteModal');
+        this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        this.cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+        // Track the prompt ID pending deletion
+        this.pendingDeleteId = null;
     }
 
     setupEventListeners() {
         if (this.savePromptBtn) this.savePromptBtn.addEventListener('click', () => this.savePrompt());
         if (this.newPromptBtn) this.newPromptBtn.addEventListener('click', () => this.newPrompt());
         if (this.attachFileBtn) this.attachFileBtn.addEventListener('click', () => this.attachFile());
+
+        // Delete confirmation modal buttons
+        if (this.confirmDeleteBtn) {
+            this.confirmDeleteBtn.addEventListener('click', () => this.confirmDelete());
+        }
+        if (this.cancelDeleteBtn) {
+            this.cancelDeleteBtn.addEventListener('click', () => this.closeDeleteModal());
+        }
 
         if (this.promptsContainer) {
             this.promptsContainer.addEventListener('click', (event) => {
@@ -361,6 +377,39 @@ class PromptManager {
         }
     }
 
+    showDeleteModal(id) {
+        if (!this.deleteModal) return;
+
+        this.pendingDeleteId = id;
+        this.deleteModal.classList.add('show');
+    }
+
+    closeDeleteModal() {
+        if (!this.deleteModal) return;
+
+        this.pendingDeleteId = null;
+        this.deleteModal.classList.remove('show');
+    }
+
+    confirmDelete() {
+        if (this.pendingDeleteId === null) return;
+
+        const promptIdNum = this.pendingDeleteId;
+        this.prompts = this.prompts.filter(p => p.id !== promptIdNum);
+
+        // If deleting the prompt being edited, reset the form
+        if (this.editingPromptId === promptIdNum) {
+            this.newPrompt();
+        }
+
+        this.savePrompts();
+        this.renderPrompts();
+        this.showToast('Prompt deleted!', 'info');
+
+        // Close the modal
+        this.closeDeleteModal();
+    }
+
     deletePrompt(id) {
         const promptIdNum = typeof id === 'number' ? id : parseInt(id, 10);
         if (isNaN(promptIdNum)) {
@@ -368,15 +417,8 @@ class PromptManager {
             return;
         }
 
-        if (confirm('Are you sure you want to delete this prompt?')) {
-            this.prompts = this.prompts.filter(p => p.id !== promptIdNum);
-            if (this.editingPromptId === promptIdNum) {
-                this.newPrompt();
-            }
-            this.savePrompts();
-            this.renderPrompts();
-            this.showToast('Prompt deleted!', 'info');
-        }
+        // Show the custom delete confirmation modal instead of browser confirm
+        this.showDeleteModal(promptIdNum);
     }
 
     editPrompt(id) {
