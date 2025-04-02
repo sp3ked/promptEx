@@ -137,13 +137,31 @@ class PromptManager {
         this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
         this.cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
 
+        // View/Edit modal elements
+        this.viewEditModal = document.getElementById('viewEditModal');
+        this.viewEditTitle = document.getElementById('viewEditTitle');
+        this.viewEditTextarea = document.getElementById('viewEditTextarea');
+        this.closeViewEditBtn = document.getElementById('closeViewEditBtn');
+        this.deleteFromViewBtn = document.getElementById('deleteFromViewBtn');
+        this.copyFromViewBtn = document.getElementById('copyFromViewBtn');
+        this.sendFromViewBtn = document.getElementById('sendFromViewBtn');
+        this.saveFromViewBtn = document.getElementById('saveFromViewBtn');
+
+        // New Prompt modal elements
+        this.newPromptModal = document.getElementById('newPromptModal');
+        this.newPromptTextarea = document.getElementById('newPromptTextarea');
+        this.closeNewPromptBtn = document.getElementById('closeNewPromptBtn');
+        this.cancelNewPromptBtn = document.getElementById('cancelNewPromptBtn');
+        this.createNewPromptBtn = document.getElementById('createNewPromptBtn');
+
         // Track the prompt ID pending deletion
         this.pendingDeleteId = null;
+        this.currentlyViewingId = null;
     }
 
     setupEventListeners() {
         if (this.savePromptBtn) this.savePromptBtn.addEventListener('click', () => this.savePrompt());
-        if (this.newPromptBtn) this.newPromptBtn.addEventListener('click', () => this.newPrompt());
+        if (this.newPromptBtn) this.newPromptBtn.addEventListener('click', () => this.showNewPromptModal());
         if (this.attachFileBtn) this.attachFileBtn.addEventListener('click', () => this.attachFile());
 
         // Delete confirmation modal buttons
@@ -154,13 +172,41 @@ class PromptManager {
             this.cancelDeleteBtn.addEventListener('click', () => this.closeDeleteModal());
         }
 
+        // View/Edit modal buttons
+        if (this.closeViewEditBtn) {
+            this.closeViewEditBtn.addEventListener('click', () => this.closeViewEditModal());
+        }
+        if (this.deleteFromViewBtn) {
+            this.deleteFromViewBtn.addEventListener('click', () => this.deletePrompt(this.currentlyViewingId));
+        }
+        if (this.copyFromViewBtn) {
+            this.copyFromViewBtn.addEventListener('click', () => this.copyPrompt(this.currentlyViewingId));
+        }
+        if (this.sendFromViewBtn) {
+            this.sendFromViewBtn.addEventListener('click', () => this.sendPrompt(this.currentlyViewingId));
+        }
+        if (this.saveFromViewBtn) {
+            this.saveFromViewBtn.addEventListener('click', () => this.savePromptFromView());
+        }
+
+        // New Prompt modal buttons
+        if (this.closeNewPromptBtn) {
+            this.closeNewPromptBtn.addEventListener('click', () => this.closeNewPromptModal());
+        }
+        if (this.cancelNewPromptBtn) {
+            this.cancelNewPromptBtn.addEventListener('click', () => this.closeNewPromptModal());
+        }
+        if (this.createNewPromptBtn) {
+            this.createNewPromptBtn.addEventListener('click', () => this.createNewPrompt());
+        }
+
         if (this.promptsContainer) {
             this.promptsContainer.addEventListener('click', (event) => {
                 const target = event.target;
-                const button = target.closest('.btn');
                 const card = target.closest('.prompt-card');
+                const button = target.closest('.btn');
 
-                if (!button || !card) return;
+                if (!card) return;
 
                 const promptIdStr = card.getAttribute('data-prompt-id');
                 const promptId = parseInt(promptIdStr, 10);
@@ -170,14 +216,16 @@ class PromptManager {
                     return;
                 }
 
-                if (button.classList.contains('btn-send')) {
-                    this.sendPrompt(promptId);
-                } else if (button.classList.contains('btn-copy')) {
-                    this.copyPrompt(promptId);
-                } else if (button.classList.contains('btn-edit')) {
-                    this.editPrompt(promptId);
-                } else if (button.classList.contains('btn-delete')) {
-                    this.deletePrompt(promptId);
+                if (button) {
+                    if (button.classList.contains('btn-send')) {
+                        this.sendPrompt(promptId);
+                    } else if (button.classList.contains('btn-copy')) {
+                        this.copyPrompt(promptId);
+                    } else if (button.classList.contains('btn-delete')) {
+                        this.deletePrompt(promptId);
+                    }
+                } else {
+                    this.showViewEditModal(promptId);
                 }
             });
         }
@@ -436,6 +484,72 @@ class PromptManager {
         this.renderPrompts();
     }
 
+    showViewEditModal(id) {
+        const prompt = this.prompts.find(p => p.id === id);
+        if (!prompt) return;
+
+        this.currentlyViewingId = id;
+        this.viewEditTitle.textContent = prompt.title;
+        this.viewEditTextarea.value = prompt.content;
+        this.viewEditModal.classList.add('show');
+    }
+
+    closeViewEditModal() {
+        this.currentlyViewingId = null;
+        this.viewEditModal.classList.remove('show');
+    }
+
+    showNewPromptModal() {
+        this.newPromptTextarea.value = '';
+        this.newPromptModal.classList.add('show');
+    }
+
+    closeNewPromptModal() {
+        this.newPromptModal.classList.remove('show');
+    }
+
+    createNewPrompt() {
+        const content = this.newPromptTextarea.value.trim();
+        if (!content) {
+            this.showToast('Please enter a prompt to save.', 'error');
+            return;
+        }
+
+        const prompt = {
+            id: Date.now(),
+            title: content.substring(0, 30) + (content.length > 30 ? '...' : ''),
+            content: content,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        this.prompts.unshift(prompt);
+        this.savePrompts();
+        this.renderPrompts();
+        this.closeNewPromptModal();
+        this.showToast('Prompt saved!', 'success');
+    }
+
+    savePromptFromView() {
+        const content = this.viewEditTextarea.value.trim();
+        if (!content) {
+            this.showToast('Please enter a prompt to save.', 'error');
+            return;
+        }
+
+        const prompt = this.prompts.find(p => p.id === this.currentlyViewingId);
+        if (!prompt) return;
+
+        prompt.content = content;
+        prompt.title = content.substring(0, 30) + (content.length > 30 ? '...' : '');
+        prompt.updatedAt = new Date().toISOString();
+
+        this.savePrompts();
+        this.renderPrompts();
+        this.closeViewEditModal();
+        this.showToast('Prompt updated!', 'success');
+    }
+
     renderPrompts() {
         if (!this.promptsContainer) return;
         this.promptsContainer.innerHTML = '';
@@ -449,10 +563,6 @@ class PromptManager {
         sortedPrompts.forEach(prompt => {
             const card = document.createElement('div');
             card.className = 'prompt-card';
-            if (this.editingPromptId === prompt.id) {
-                card.style.outline = '2px solid var(--primary-blue)';
-                card.style.boxShadow = '0 0 5px rgba(30, 136, 229, 0.5)';
-            }
             card.setAttribute('data-prompt-id', prompt.id);
 
             const title = document.createElement('h3');
@@ -473,10 +583,15 @@ class PromptManager {
             meta.innerHTML = `
                 <span>${dateString}</span>
                 <div class="prompt-actions">
-                    <button class="btn btn-primary btn-send" title="Send to Active LLM Tab">Send</button>
-                    <button class="btn btn-tertiary btn-copy" title="Copy Prompt Text">Copy</button>
-                    <button class="btn btn-tertiary btn-edit" title="Edit Prompt">Edit</button>
-                    <button class="btn btn-delete" title="Delete Prompt">Delete</button>
+                    <button class="btn btn-icon send" title="Send to Active LLM Tab">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                    <button class="btn btn-icon copy" title="Copy Prompt Text">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-icon delete" title="Delete Prompt">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             `;
 

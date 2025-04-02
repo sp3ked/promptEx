@@ -4,6 +4,10 @@
 <head>
     <title>Promptr</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@latest/dist/ionicons/ionicons.esm.js"></script>
     <style>
         :root {
             --primary-blue: #1E88E5;
@@ -104,14 +108,16 @@
 
         .prompt-textarea {
             width: 100%;
-            min-height: 100px;
+            height: 200px;
+            max-height: 70vh;
             padding: 12px;
             background-color: var(--neutral-light-grey);
             border: 1px solid #BDBDBD;
             border-radius: 8px;
             color: var(--neutral-dark-grey);
             font-size: 15px;
-            resize: vertical;
+            resize: none;
+            overflow-y: auto;
         }
 
         .prompt-textarea:focus {
@@ -142,6 +148,7 @@
             padding: 12px;
             margin-bottom: 8px;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .prompt-card:hover {
@@ -149,22 +156,22 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .prompt-title {
+        .prompt-card .prompt-title {
+            margin: 0 0 8px 0;
             font-size: 16px;
-            font-weight: 500;
-            color: var(--primary-blue);
-            margin-bottom: 4px;
-        }
-
-        .prompt-content {
-            font-size: 15px;
             color: var(--neutral-dark-grey);
-            margin-bottom: 8px;
-            white-space: pre-wrap;
-            word-break: break-word;
         }
 
-        .prompt-meta {
+        .prompt-card .prompt-content {
+            margin: 0 0 8px 0;
+            color: var(--neutral-medium-grey);
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .prompt-card .prompt-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -172,14 +179,18 @@
             color: var(--neutral-medium-grey);
         }
 
-        .prompt-meta .prompt-actions {
+        .prompt-card .prompt-actions {
             display: flex;
-            gap: 4px;
+            gap: 8px;
         }
 
-        .prompt-meta .btn {
-            padding: 6px 12px;
-            font-size: 12px;
+        .prompt-card .btn-icon {
+            font-size: 18px;
+            padding: 4px;
+        }
+
+        .prompt-card .btn-icon:hover {
+            color: var(--primary-blue);
         }
 
         .toast {
@@ -251,7 +262,63 @@
             padding: 20px;
             width: 80%;
             max-width: 320px;
+            max-height: 90vh;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-content.view-edit-modal {
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .modal-content .prompt-textarea {
+            flex: 1;
+            min-height: 200px;
+            margin-bottom: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--neutral-dark-grey);
+            font-size: 20px;
+            padding: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+        }
+
+        .btn-icon:hover {
+            background-color: var(--neutral-light-grey);
+            color: var(--primary-blue);
+        }
+
+        .btn-icon.delete:hover {
+            background-color: var(--error-red);
+            color: var(--white);
+        }
+
+        .btn-icon.send:hover {
+            background-color: var(--primary-blue);
+            color: var(--white);
+        }
+
+        .btn-icon.copy:hover {
+            background-color: var(--secondary-teal);
+            color: var(--white);
         }
 
         .modal-content h3 {
@@ -279,14 +346,20 @@
     <div class="container">
         <div class="header">
             <h1 class="title">Promptr</h1>
-            <button class="btn btn-secondary" id="newPromptBtn">New Prompt</button>
+            <button class="btn btn-secondary" id="newPromptBtn">
+                <i class="fas fa-plus"></i> New Prompt
+            </button>
         </div>
 
         <div class="prompt-input-container">
             <textarea class="prompt-textarea" id="promptInput" placeholder="Enter your prompt here..."></textarea>
             <div class="prompt-actions">
-                <button class="btn btn-secondary" id="attachFileBtn">Attach File</button>
-                <button class="btn btn-primary" id="savePromptBtn">Save Prompt</button>
+                <button class="btn btn-secondary" id="attachFileBtn">
+                    <i class="fas fa-paperclip"></i> Attach File
+                </button>
+                <button class="btn btn-primary" id="savePromptBtn">
+                    <i class="fas fa-save"></i> Save Prompt
+                </button>
             </div>
         </div>
 
@@ -300,8 +373,64 @@
             <h3>Confirm Delete</h3>
             <p>Are you sure you want to delete this prompt?</p>
             <div class="modal-actions">
-                <button class="btn btn-tertiary" id="cancelDeleteBtn">Cancel</button>
-                <button class="btn btn-delete" id="confirmDeleteBtn">Delete</button>
+                <button class="btn btn-tertiary" id="cancelDeleteBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn-delete" id="confirmDeleteBtn">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View/Edit Prompt Modal -->
+    <div class="modal" id="viewEditModal">
+        <div class="modal-content view-edit-modal">
+            <div class="modal-header">
+                <h3 id="viewEditTitle">View Prompt</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-icon" id="closeViewEditBtn" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <textarea class="prompt-textarea" id="viewEditTextarea"></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-delete" id="deleteFromViewBtn">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                <button class="btn btn-tertiary" id="copyFromViewBtn">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="btn btn-primary" id="sendFromViewBtn">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+                <button class="btn btn-secondary" id="saveFromViewBtn">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Prompt Modal -->
+    <div class="modal" id="newPromptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Prompt</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-icon" id="closeNewPromptBtn" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <textarea class="prompt-textarea" id="newPromptTextarea" placeholder="Enter your prompt here..."></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-tertiary" id="cancelNewPromptBtn">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn-primary" id="createNewPromptBtn">
+                    <i class="fas fa-plus"></i> Create
+                </button>
             </div>
         </div>
     </div>
