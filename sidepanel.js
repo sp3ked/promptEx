@@ -142,6 +142,51 @@ class PromptManager {
             });
         }
 
+        // Setup click listeners for community prompt cards
+        document.querySelectorAll('.community-section .prompts-container').forEach(container => {
+            container.addEventListener('click', (event) => {
+                const target = event.target;
+                const card = target.closest('.prompt-card');
+                const button = target.closest('.btn-icon');
+                if (!card) return;
+                const promptId = card.getAttribute('data-prompt-id');
+                if (!promptId) {
+                    console.error("Invalid community prompt ID:", promptId);
+                    return;
+                }
+                if (button) {
+                    if (button.classList.contains('btn-send')) {
+                        // Find the prompt content and send it
+                        const content = card.querySelector('.prompt-content')?.textContent;
+                        if (content) {
+                            injectPromptAndFileIntoPage({ content });
+                        }
+                    } else if (button.classList.contains('btn-copy')) {
+                        // Copy functionality for community prompt
+                        const content = card.querySelector('.prompt-content')?.textContent;
+                        if (content) {
+                            navigator.clipboard.writeText(content)
+                                .then(() => this.showToast('Copied to clipboard!', 'success'))
+                                .catch(err => this.showToast('Failed to copy: ' + err, 'error'));
+                        }
+                    }
+                } else {
+                    // Show a view-only modal for community prompts
+                    const title = card.querySelector('.prompt-title-text')?.textContent;
+                    const content = card.querySelector('.prompt-content')?.textContent;
+                    if (title && content) {
+                        this.viewEditTitle.textContent = title;
+                        this.viewEditTextarea.value = content;
+                        this.currentlyViewingId = promptId;
+                        this.viewEditModal.classList.add('show');
+                        // Hide edit/delete buttons for community prompts
+                        this.deleteFromViewBtn.style.display = 'none';
+                        this.saveFromViewBtn.style.display = 'none';
+                    }
+                }
+            });
+        });
+
         // Settings listeners
         if (this.saveSettingsBtn) this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
 
@@ -409,10 +454,15 @@ class PromptManager {
     showViewEditModal(id) {
         const prompt = this.prompts.find(p => p.id === id);
         if (!prompt) return;
-        this.currentlyViewingId = id;
+
         this.viewEditTitle.textContent = prompt.title;
         this.viewEditTextarea.value = prompt.content;
+        this.currentlyViewingId = id;
         this.viewEditModal.classList.add('show');
+
+        // Ensure delete and save buttons are visible for user prompts
+        this.deleteFromViewBtn.style.display = 'block';
+        this.saveFromViewBtn.style.display = 'block';
     }
 
     closeViewEditModal() {
