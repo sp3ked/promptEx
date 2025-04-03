@@ -121,7 +121,7 @@
 
         .prompt-card .prompt-content {
             margin: 5px 0;
-            /* Reduced margin */
+            padding: 2px 0;
             font-size: 14px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -130,9 +130,14 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: normal;
-            height: 42px;
-            /* Adjusted for 2 lines at 1.4 line-height */
+            height: auto;
+            min-height: calc(1.4em * 2);
+            /* Exact height for 2 lines */
             line-height: 1.4;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-sizing: content-box;
+            /* Ensure padding doesn't affect height calculation */
         }
 
         .prompt-card .prompt-meta {
@@ -401,11 +406,25 @@
             text-overflow: ellipsis;
             white-space: normal;
             /* Ensure wrapping for multi-line */
-            height: 42px;
-            /* Reduced height (2 * 1.4 * 15px approx) */
+            height: auto;
+            min-height: calc(1.4em * 2 + 4px);
+            /* Exact height for 2 lines plus padding */
             line-height: 1.4;
             margin: 5px 0;
-            /* Reduced margin */
+            padding: 2px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-sizing: content-box;
+            /* Ensure padding doesn't affect height calculation */
+        }
+
+        .theme-data-haven.mode-dark .prompt-card .prompt-content.expanded {
+            -webkit-line-clamp: unset;
+            height: auto;
+            max-height: calc(1.4em * 60);
+            /* Max height for 60 lines */
+            overflow-y: auto;
+            white-space: pre-wrap;
         }
 
         .theme-data-haven.mode-dark .prompt-card .prompt-meta {
