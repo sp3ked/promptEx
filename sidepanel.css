@@ -1,0 +1,112 @@
+/* Search and Sort Controls */
+.search-sort-container {
+    padding: 16px;
+    background: var(--dark-base);
+    border-bottom: 2px solid var(--neon-magenta);
+    display: flex;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin-bottom: 16px;
+}
+
+.search-box {
+    flex: 1;
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 4px;
+    background: rgba(20, 20, 20, 0.8);
+    color: var(--glow-white);
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--neon-magenta);
+    box-shadow: 0 0 15px var(--neon-magenta);
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--neon-cyan);
+    font-size: 14px;
+}
+
+.sort-select {
+    padding: 10px 32px 10px 12px;
+    border: 1px solid var(--neon-cyan);
+    border-radius: 4px;
+    background: rgba(20, 20, 20, 0.8);
+    color: var(--glow-white);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: var(--neon-magenta);
+    box-shadow: 0 0 15px var(--neon-magenta);
+}
+
+/* Search result highlighting */
+.highlight {
+    background-color: var(--accent-color-transparent);
+    padding: 0 2px;
+    border-radius: 2px;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+/* Prompt cards container adjustments */
+#promptsContainer {
+    padding: 0 16px;
+    height: calc(100vh - 140px);
+    /* Adjusted for header + search bar */
+    overflow-y: auto;
+}
+
+/* Prompt card hover effect enhancement */
+.prompt-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prompt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Empty state message */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--neutral-medium-grey);
+    font-size: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .search-sort-container {
+        flex-direction: column;
+    }
+
+    .search-input,
+    .sort-select {
+        width: 100%;
+    }
+}

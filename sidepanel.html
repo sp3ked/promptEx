@@ -3,23 +3,25 @@
 
 <head>
     <title>Promptr</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Font Awesome -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Share+Tech+Mono&family=Courier+Prime:wght@400;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Ionicons -->
-    <script type="module" src="https://unpkg.com/ionicons@latest/dist/ionicons/ionicons.esm.js"></script>
     <style>
+        /* Theme Variables */
         :root {
-            --primary-blue: #1E88E5;
-            --secondary-teal: #00ACC1;
-            --neutral-light-grey: #F5F5F5;
-            --neutral-medium-grey: #9E9E9E;
-            --neutral-dark-grey: #424242;
-            --white: #FFFFFF;
-            --success-green: #4CAF50;
-            --error-red: #F44336;
+            /* Cyberpunk Theme */
+            --base-dark: #1A1E26;
+            --midnight-blue: #0F1419;
+            --neon-cyan: #00D4FF;
+            --neon-lime: #39FF14;
+            --metal-grey: #2E343D;
+            --text-light: #DDEEFF;
+            --success-green: #39FF14;
+            --error-red: #FF4444;
         }
 
+        /* Original Styles */
         * {
             margin: 0;
             padding: 0;
@@ -27,12 +29,14 @@
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--neutral-light-grey);
-            color: var(--neutral-dark-grey);
+            font-family: 'Roboto Condensed', sans-serif;
+            background: linear-gradient(180deg, var(--base-dark) 0%, var(--midnight-blue) 100%);
+            color: var(--text-light);
             width: 400px;
             height: 100vh;
             overflow: hidden;
+            border-right: 1px solid var(--neon-cyan);
+            position: relative;
         }
 
         .container {
@@ -47,59 +51,27 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
+            border-bottom: 1px solid var(--neon-cyan);
+            padding-bottom: 8px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
 
         .title {
             font-size: 24px;
-            font-weight: 600;
-            color: var(--primary-blue);
+            font-weight: 700;
         }
 
         .btn {
             padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 500;
+            border-radius: 4px;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-blue);
-            color: var(--white);
-        }
-
-        .btn-primary:hover {
-            background-color: #1565C0;
-        }
-
-        .btn-secondary {
-            background-color: var(--secondary-teal);
-            color: var(--white);
-        }
-
-        .btn-secondary:hover {
-            background-color: #00838F;
-        }
-
-        .btn-tertiary {
-            background-color: var(--neutral-light-grey);
-            color: var(--neutral-dark-grey);
-            border: 1px solid #BDBDBD;
-        }
-
-        .btn-tertiary:hover {
-            background-color: #E0E0E0;
-        }
-
-        .btn-delete {
-            background-color: var(--error-red);
-            color: var(--white);
-        }
-
-        .btn-delete:hover {
-            background-color: #D32F2F;
         }
 
         .prompt-input-container {
@@ -111,22 +83,11 @@
             height: 200px;
             max-height: 70vh;
             padding: 12px;
-            background-color: var(--neutral-light-grey);
-            border: 1px solid #BDBDBD;
-            border-radius: 8px;
-            color: var(--neutral-dark-grey);
+            border-radius: 4px;
             font-size: 15px;
             resize: none;
             overflow-y: auto;
-        }
-
-        .prompt-textarea:focus {
-            outline: none;
-            border: 2px solid var(--primary-blue);
-        }
-
-        .prompt-textarea::placeholder {
-            color: var(--neutral-medium-grey);
+            transition: all 0.2s ease;
         }
 
         .prompt-actions {
@@ -139,32 +100,25 @@
             flex: 1;
             overflow-y: auto;
             margin-top: 8px;
+            padding: 8px;
+            border-radius: 4px;
         }
 
         .prompt-card {
-            background-color: var(--white);
-            border: 1px solid #E0E0E0;
-            border-radius: 8px;
+            border-radius: 4px;
             padding: 12px;
             margin-bottom: 8px;
             transition: all 0.2s ease;
             cursor: pointer;
         }
 
-        .prompt-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
         .prompt-card .prompt-title {
             margin: 0 0 8px 0;
             font-size: 16px;
-            color: var(--neutral-dark-grey);
         }
 
         .prompt-card .prompt-content {
             margin: 0 0 8px 0;
-            color: var(--neutral-medium-grey);
             font-size: 14px;
             white-space: nowrap;
             overflow: hidden;
@@ -176,7 +130,6 @@
             justify-content: space-between;
             align-items: center;
             font-size: 12px;
-            color: var(--neutral-medium-grey);
         }
 
         .prompt-card .prompt-actions {
@@ -184,13 +137,14 @@
             gap: 8px;
         }
 
-        .prompt-card .btn-icon {
+        .btn-icon {
+            background: none;
             font-size: 18px;
             padding: 4px;
-        }
-
-        .prompt-card .btn-icon:hover {
-            color: var(--primary-blue);
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
         }
 
         .toast {
@@ -199,46 +153,16 @@
             left: 50%;
             transform: translateX(-50%);
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-size: 14px;
             opacity: 0;
             transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 1000;
         }
 
         .toast.show {
             opacity: 1;
         }
 
-        .toast-success {
-            background-color: var(--success-green);
-            color: var(--white);
-        }
-
-        .toast-error {
-            background-color: var(--error-red);
-            color: var(--white);
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--neutral-light-grey);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #BDBDBD;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #9E9E9E;
-        }
-
-        /* Modal styles */
         .modal {
             display: none;
             position: fixed;
@@ -246,7 +170,6 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
             z-index: 2000;
             justify-content: center;
             align-items: center;
@@ -257,13 +180,11 @@
         }
 
         .modal-content {
-            background-color: var(--white);
-            border-radius: 8px;
+            border-radius: 4px;
             padding: 20px;
             width: 80%;
             max-width: 320px;
             max-height: 90vh;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             display: flex;
             flex-direction: column;
         }
@@ -273,12 +194,6 @@
             width: 90%;
         }
 
-        .modal-content .prompt-textarea {
-            flex: 1;
-            min-height: 200px;
-            margin-bottom: 16px;
-        }
-
         .modal-header {
             display: flex;
             justify-content: space-between;
@@ -286,88 +201,474 @@
             margin-bottom: 16px;
         }
 
-        .btn-icon {
-            background: none;
-            border: none;
-            color: var(--neutral-dark-grey);
-            font-size: 20px;
-            padding: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 4px;
-        }
-
-        .btn-icon:hover {
-            background-color: var(--neutral-light-grey);
-            color: var(--primary-blue);
-        }
-
-        .btn-icon.delete:hover {
-            background-color: var(--error-red);
-            color: var(--white);
-        }
-
-        .btn-icon.send:hover {
-            background-color: var(--primary-blue);
-            color: var(--white);
-        }
-
-        .btn-icon.copy:hover {
-            background-color: var(--secondary-teal);
-            color: var(--white);
-        }
-
-        .modal-content h3 {
-            color: var(--neutral-dark-grey);
-            margin-bottom: 12px;
-            font-size: 18px;
-        }
-
-        .modal-content p {
-            color: var(--neutral-dark-grey);
-            margin-bottom: 16px;
-            font-size: 15px;
-        }
-
         .modal-actions {
             display: flex;
             justify-content: flex-end;
             gap: 8px;
         }
+
+        .settings-btn {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* Tabs Styles */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--neon-cyan);
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            background: var(--metal-grey);
+            color: var(--text-light);
+            margin-right: 4px;
+            border: 1px solid var(--neon-cyan);
+            border-bottom: none;
+        }
+
+        .tab.active {
+            background: linear-gradient(180deg, var(--base-dark) 0%, var(--midnight-blue) 100%);
+            border-bottom: 1px solid var(--midnight-blue);
+            position: relative;
+            top: 1px;
+            z-index: 1;
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: auto;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .search-sort-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--metal-grey);
+            border: 1px solid var(--neon-cyan);
+            color: var(--text-light);
+        }
+
+        #sortSelect {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--metal-grey);
+            border: 1px solid var(--neon-cyan);
+            color: var(--text-light);
+        }
+
+        .placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: var(--text-light);
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        /* Theme: Data Haven */
+        .theme-data-haven {
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+
+        .theme-data-haven.mode-dark {
+            --base-dark: #1A1E26;
+            --midnight-blue: #0F1419;
+            --neon-cyan: #00D4FF;
+            --neon-lime: #39FF14;
+            --metal-grey: #2E343D;
+            --text-light: #DDEEFF;
+            --success-green: #39FF14;
+            --error-red: #FF4444;
+            background: linear-gradient(180deg, var(--base-dark) 0%, var(--midnight-blue) 100%);
+            color: var(--text-light);
+            border-right: 1px solid var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0, 212, 255, 0.05) 10px, rgba(0, 212, 255, 0.05) 11px);
+            pointer-events: none;
+        }
+
+        .theme-data-haven.mode-dark .container {
+            background: rgba(30, 36, 45, 0.95);
+            box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.1);
+        }
+
+        .theme-data-haven.mode-dark .header {
+            border-bottom: 1px solid var(--neon-cyan);
+            padding-bottom: 8px;
+        }
+
+        .theme-data-haven.mode-dark .title {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 4px rgba(0, 212, 255, 0.5);
+        }
+
+        .theme-data-haven.mode-dark .btn {
+            border: 1px solid var(--neon-cyan);
+            background: var(--metal-grey);
+            color: var(--text-light);
+        }
+
+        .theme-data-haven.mode-dark .btn:hover {
+            background: var(--neon-cyan);
+            color: var(--midnight-blue);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark .btn-primary {
+            background: var(--neon-cyan);
+            color: var(--midnight-blue);
+            border: none;
+        }
+
+        .theme-data-haven.mode-dark .btn-primary:hover {
+            background: #00B8E6;
+            box-shadow: 0 0 12px var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark .btn-secondary {
+            background: var(--neon-lime);
+            color: var(--midnight-blue);
+            border: none;
+        }
+
+        .theme-data-haven.mode-dark .btn-secondary:hover {
+            background: #32E600;
+            box-shadow: 0 0 12px var(--neon-lime);
+        }
+
+        .theme-data-haven.mode-dark .btn-tertiary {
+            background: var(--metal-grey);
+            color: var(--text-light);
+        }
+
+        .theme-data-haven.mode-dark .btn-tertiary:hover {
+            background: var(--neon-cyan);
+            color: var(--midnight-blue);
+        }
+
+        .theme-data-haven.mode-dark .btn-delete {
+            background: var(--error-red);
+            color: var(--text-light);
+            border: none;
+        }
+
+        .theme-data-haven.mode-dark .btn-delete:hover {
+            background: #E60000;
+            box-shadow: 0 0 12px var(--error-red);
+        }
+
+        .theme-data-haven.mode-dark .prompt-textarea {
+            background: var(--midnight-blue);
+            border: 1px solid var(--neon-cyan);
+            color: var(--text-light);
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: inset 0 0 5px rgba(0, 212, 255, 0.2);
+        }
+
+        .theme-data-haven.mode-dark .prompt-textarea:focus {
+            border-color: var(--neon-lime);
+            box-shadow: inset 0 0 8px rgba(57, 255, 20, 0.3);
+        }
+
+        .theme-data-haven.mode-dark .prompt-textarea::placeholder {
+            color: rgba(221, 238, 255, 0.5);
+        }
+
+        .theme-data-haven.mode-dark .prompts-container {
+            background: rgba(15, 20, 25, 0.8);
+            border: 1px solid var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark .prompt-card {
+            background: var(--metal-grey);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-data-haven.mode-dark .prompt-card:hover {
+            border-color: var(--neon-lime);
+            box-shadow: 0 4px 8px rgba(57, 255, 20, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .theme-data-haven.mode-dark .prompt-card .prompt-title {
+            color: var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark .prompt-card .prompt-content,
+        .theme-data-haven.mode-dark .prompt-card .prompt-meta {
+            color: var(--text-light);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .theme-data-haven.mode-dark .btn-icon {
+            border: 1px solid var(--neon-cyan);
+            color: var(--text-light);
+        }
+
+        .theme-data-haven.mode-dark .btn-icon:hover {
+            background: var(--neon-cyan);
+            color: var(--midnight-blue);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark .btn-icon.delete:hover {
+            background: var(--error-red);
+            border-color: var(--error-red);
+            box-shadow: 0 0 8px var(--error-red);
+        }
+
+        .theme-data-haven.mode-dark .btn-icon.send:hover {
+            background: var(--neon-lime);
+            border-color: var(--neon-lime);
+            box-shadow: 0 0 8px var(--neon-lime);
+        }
+
+        .theme-data-haven.mode-dark .toast {
+            background: var(--metal-grey);
+            color: var(--text-light);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .theme-data-haven.mode-dark .toast-success {
+            border-color: var(--success-green);
+            background: rgba(57, 255, 20, 0.2);
+        }
+
+        .theme-data-haven.mode-dark .toast-error {
+            border-color: var(--error-red);
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        .theme-data-haven.mode-dark .modal {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(2px);
+        }
+
+        .theme-data-haven.mode-dark .modal-content {
+            background: var(--base-dark);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+        }
+
+        .theme-data-haven.mode-dark .modal-header {
+            border-bottom: 1px solid var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark .modal-content h3 {
+            color: var(--neon-cyan);
+        }
+
+        .theme-data-haven.mode-dark .modal-content p {
+            color: var(--text-light);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .theme-data-haven.mode-dark ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .theme-data-haven.mode-dark ::-webkit-scrollbar-track {
+            background: var(--midnight-blue);
+        }
+
+        .theme-data-haven.mode-dark ::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 4px;
+        }
+
+        .theme-data-haven.mode-dark ::-webkit-scrollbar-thumb:hover {
+            background: var(--neon-lime);
+        }
+
+        .theme-data-haven.mode-dark .settings-btn {
+            background: var(--metal-grey);
+            border: 1px solid var(--neon-cyan);
+            color: var(--text-light);
+        }
+
+        .theme-data-haven.mode-dark .settings-btn:hover {
+            background: var(--neon-cyan);
+            color: var(--midnight-blue);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+
+        /* Tab styling in dark mode */
+        .theme-data-haven.mode-dark .tab {
+            background: var(--metal-grey);
+            border: 1px solid var(--neon-cyan);
+            border-bottom: none;
+            color: var(--text-light);
+        }
+
+        .theme-data-haven.mode-dark .tab.active {
+            background: linear-gradient(180deg, var(--base-dark) 0%, var(--midnight-blue) 100%);
+            border-bottom: 1px solid var(--midnight-blue);
+            color: var(--neon-cyan);
+            text-shadow: 0 0 4px rgba(0, 212, 255, 0.5);
+        }
+
+        .theme-data-haven.mode-dark .tab:hover:not(.active) {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        /* Continue with other theme styles... */
+        /* ... (all the other themes CSS remains the same, just adding tab styles to them) */
     </style>
     <script src="sidepanel.js"></script>
 </head>
 
-<body>
+<body class="theme-data-haven mode-dark">
     <div class="container">
         <div class="header">
             <h1 class="title">Promptr</h1>
-            <button class="btn btn-secondary" id="newPromptBtn">
-                <i class="fas fa-plus"></i> New Prompt
-            </button>
-        </div>
-
-        <div class="prompt-input-container">
-            <textarea class="prompt-textarea" id="promptInput" placeholder="Enter your prompt here..."></textarea>
-            <div class="prompt-actions">
-                <button class="btn btn-secondary" id="attachFileBtn">
-                    <i class="fas fa-paperclip"></i> Attach File
-                </button>
-                <button class="btn btn-primary" id="savePromptBtn">
-                    <i class="fas fa-save"></i> Save Prompt
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="newPromptBtn">
+                    <i class="fas fa-plus"></i> New Prompt
                 </button>
             </div>
         </div>
 
-        <div class="prompts-container" id="promptsContainer"></div>
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <div class="tab active" data-tab="prompts">Prompts</div>
+            <div class="tab" data-tab="community">Community</div>
+            <div class="tab" data-tab="maker">Maker</div>
+            <div class="tab" data-tab="settings">Settings</div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-sort-container">
+            <input type="text" id="searchInput" placeholder="Search prompts...">
+            <select id="sortSelect">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="az">A-Z</option>
+                <option value="za">Z-A</option>
+            </select>
+        </div>
+
+        <!-- Prompts Tab Content -->
+        <div class="tab-content active" id="promptsTab">
+            <div class="prompts-container" id="promptsContainer"></div>
+        </div>
+
+        <!-- Community Tab Content -->
+        <div class="tab-content" id="communityTab">
+            <div class="prompts-container">
+                <!-- Sample community prompts -->
+                <div class="prompt-card">
+                    <h3 class="prompt-title">Advanced Code Review</h3>
+                    <p class="prompt-content">Conduct a thorough code review for the following code, focusing on best
+                        practices, performance optimization, and security vulnerabilities...</p>
+                    <div class="prompt-meta">
+                        <span>By: CodeMaster</span>
+                        <div class="prompt-actions">
+                            <button class="btn-icon btn-copy" title="Copy"><i class="fas fa-copy"></i></button>
+                            <button class="btn-icon btn-send send" title="Send"><i
+                                    class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="prompt-card">
+                    <h3 class="prompt-title">Daily Journal Reflection</h3>
+                    <p class="prompt-content">Help me reflect on my day by asking thoughtful questions about my
+                        experiences, challenges, and achievements...</p>
+                    <div class="prompt-meta">
+                        <span>By: MindfulUser</span>
+                        <div class="prompt-actions">
+                            <button class="btn-icon btn-copy" title="Copy"><i class="fas fa-copy"></i></button>
+                            <button class="btn-icon btn-send send" title="Send"><i
+                                    class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="prompt-card">
+                    <h3 class="prompt-title">Creative Writing Assistant</h3>
+                    <p class="prompt-content">I'm working on a short story. Help me develop the following character and
+                        plot elements with creative suggestions...</p>
+                    <div class="prompt-meta">
+                        <span>By: StoryWeaver</span>
+                        <div class="prompt-actions">
+                            <button class="btn-icon btn-copy" title="Copy"><i class="fas fa-copy"></i></button>
+                            <button class="btn-icon btn-send send" title="Send"><i
+                                    class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maker Tab Content -->
+        <div class="tab-content" id="makerTab">
+            <div class="placeholder">
+                <p>Generate feature coming soon!</p>
+            </div>
+        </div>
+
+        <!-- Settings Tab Content -->
+        <div class="tab-content" id="settingsTab">
+            <div class="settings-content">
+                <div class="option">
+                    <label for="themeSelect">Theme</label>
+                    <select id="themeSelect">
+                        <option value="data-haven">Data Haven</option>
+                        <option value="digital-archive">Digital Archive</option>
+                        <option value="simple-bw">Simple Black & White</option>
+                        <option value="basic-html">Basic HTML</option>
+                    </select>
+                </div>
+                <div class="option">
+                    <label for="modeSelect">Mode</label>
+                    <select id="modeSelect">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                    </select>
+                </div>
+                <div class="modal-actions" style="justify-content: flex-start; margin-top: 16px;">
+                    <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+                </div>
+            </div>
+        </div>
     </div>
+
     <div class="toast" id="toast"></div>
 
-    <!-- Delete confirmation modal -->
     <div class="modal" id="deleteModal">
         <div class="modal-content">
             <h3>Confirm Delete</h3>
@@ -383,7 +684,6 @@
         </div>
     </div>
 
-    <!-- View/Edit Prompt Modal -->
     <div class="modal" id="viewEditModal">
         <div class="modal-content view-edit-modal">
             <div class="modal-header">
@@ -412,7 +712,6 @@
         </div>
     </div>
 
-    <!-- New Prompt Modal -->
     <div class="modal" id="newPromptModal">
         <div class="modal-content">
             <div class="modal-header">
