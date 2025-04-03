@@ -643,13 +643,19 @@ class PromptManager {
             this.showToast('Please enter prompt content.', 'error');
             return;
         }
+
+        // Sanitize content and title to prevent HTML injection
+        const sanitizedContent = this.sanitizeHtml(content);
+        const sanitizedTitle = this.sanitizeHtml(title) || 'Untitled Prompt';
+
         const prompt = {
             id: Date.now(),
-            title: title || 'Untitled Prompt',
-            content: content,
+            title: sanitizedTitle,
+            content: sanitizedContent,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
+
         this.prompts.unshift(prompt);
         this.savePrompts()
             .then(() => {
@@ -669,15 +675,33 @@ class PromptManager {
             this.showToast('Please enter a prompt to save.', 'error');
             return;
         }
+
+        // Sanitize content to prevent HTML injection
+        const sanitizedContent = this.sanitizeHtml(content);
+
         const prompt = this.prompts.find(p => p.id === this.currentlyViewingId);
         if (!prompt) return;
-        prompt.content = content;
-        prompt.title = content.split('\n')[0].substring(0, 40) || 'Untitled Prompt';
+
+        prompt.content = sanitizedContent;
+        // Use first line for title, also sanitize it
+        prompt.title = this.sanitizeHtml(sanitizedContent.split('\n')[0].substring(0, 40)) || 'Untitled Prompt';
         prompt.updatedAt = new Date().toISOString();
+
         this.savePrompts();
         this.renderPrompts();
         this.closeViewEditModal();
         this.showToast('Prompt updated!', 'success');
+    }
+
+    // Helper method to sanitize HTML to prevent injection
+    sanitizeHtml(text) {
+        // Replace HTML tags with their escaped versions
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
     renderPrompts() {
@@ -701,10 +725,10 @@ class PromptManager {
             const card = document.createElement('div');
             card.className = 'prompt-card';
             card.setAttribute('data-prompt-id', prompt.id);
-            card.setAttribute('data-content', prompt.content);
 
-            // Use the prompt title directly
-            const title = prompt.title || 'Untitled Prompt';
+            // Format the content to preserve whitespace but prevent XSS
+            // We use CSS to handle this in the display rather than using pre or white-space in the HTML
+            const displayContent = prompt.content.replace(/\n/g, '<br>');
 
             // Format the date
             const date = new Date(prompt.createdAt);
@@ -712,14 +736,14 @@ class PromptManager {
 
             card.innerHTML = `
                 <h3 class="prompt-title">
-                    <span class="prompt-title-text">${title}</span>
+                    <span class="prompt-title-text">${prompt.title}</span>
                     <div class="title-buttons">
                         <button class="btn-icon btn-copy" title="Copy"><i class="fas fa-copy"></i></button>
                         <button class="btn-icon btn-send send" title="Send"><i class="fas fa-paper-plane"></i></button>
                         <button class="btn-icon btn-delete delete" title="Delete"><i class="fas fa-trash"></i></button>
                     </div>
                 </h3>
-                <p class="prompt-content">${prompt.content}</p>
+                <p class="prompt-content">${displayContent}</p>
                 <div class="prompt-meta">
                     <span>Created: ${formattedDate}</span>
                 </div>

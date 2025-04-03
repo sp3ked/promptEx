@@ -500,6 +500,10 @@
             /* Max height for 60 lines */
             overflow-y: auto;
             white-space: pre-wrap;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            margin: 8px 0;
         }
 
         .theme-data-haven.mode-dark .prompt-card .prompt-meta {
@@ -809,6 +813,17 @@
             font-size: 15px;
             line-height: 1.6;
             padding: 16px;
+            font-family: 'Share Tech Mono', monospace;
+            white-space: pre-wrap;
+            resize: vertical;
+        }
+
+        /* Style for the new prompt textarea as well */
+        #newPromptTextarea {
+            min-height: 200px;
+            font-family: 'Share Tech Mono', monospace;
+            white-space: pre-wrap;
+            resize: vertical;
         }
 
         .theme-data-haven.mode-dark .prompt-textarea::-webkit-scrollbar {
@@ -1085,12 +1100,7 @@
         <div class="tab-content active" id="promptsTab">
             <div class="search-sort-container" id="promptsSearchContainer">
                 <input type="text" id="searchInput" placeholder="Search prompts...">
-                <select id="sortSelect">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="az">A-Z</option>
-                    <option value="za">Z-A</option>
-                </select>
+                
             </div>
             <div class="prompts-container" id="promptsContainer">
                 <!-- User's prompts will be dynamically loaded here by JavaScript -->
@@ -1101,12 +1111,7 @@
         <div class="tab-content" id="communityTab">
             <div class="search-sort-container" id="communitySearchContainer">
                 <input type="text" id="communitySearchInput" placeholder="Search community prompts...">
-                <select id="communitySortSelect">
-                    <option value="newest">Newest First</option>
-                    <option value="oldest">Oldest First</option>
-                    <option value="az">A-Z</option>
-                    <option value="za">Z-A</option>
-                </select>
+                
             </div>
 
             <!-- Modified to show sections vertically -->
@@ -1196,7 +1201,7 @@
                                 3. Performance bottlenecks</p>
                             <div class="prompt-meta">
                                 <span>By: CodeMaster</span>
-                                
+
                             </div>
                         </div>
                         <div class="prompt-card" data-prompt-id="rated-2">
@@ -1216,7 +1221,7 @@
                                 3. Transportation options</p>
                             <div class="prompt-meta">
                                 <span>By: AdventureSeeker</span>
-                                
+
                             </div>
                         </div>
                         <div class="prompt-card" data-prompt-id="rated-3">
@@ -1236,7 +1241,7 @@
                                 3. Provide cooking times and temperatures</p>
                             <div class="prompt-meta">
                                 <span>By: ChefExtraordinaire</span>
-                                
+
                             </div>
                         </div>
                     </div>
