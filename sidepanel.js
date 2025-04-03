@@ -72,6 +72,7 @@ class PromptManager {
         this.promptInput = document.getElementById('promptInput');
         this.savePromptBtn = document.getElementById('savePromptBtn');
         this.newPromptBtn = document.getElementById('newPromptBtn');
+        this.attachFileBtn = document.getElementById('attachFileBtn');
         this.toast = document.getElementById('toast');
         this.deleteModal = document.getElementById('deleteModal');
         this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
@@ -96,9 +97,13 @@ class PromptManager {
         // Tab elements
         this.tabs = document.querySelectorAll('.tab');
         this.tabContents = document.querySelectorAll('.tab-content');
+        // Search and sort elements
         this.searchInput = document.getElementById('searchInput');
         this.sortSelect = document.getElementById('sortSelect');
-        this.searchSortContainer = document.querySelector('.search-sort-container');
+        this.promptsSearchContainer = document.getElementById('promptsSearchContainer');
+        this.communitySearchContainer = document.getElementById('communitySearchContainer');
+        this.communitySearchInput = document.getElementById('communitySearchInput');
+        this.communitySortSelect = document.getElementById('communitySortSelect');
 
         this.pendingDeleteId = null;
         this.currentlyViewingId = null;
@@ -107,6 +112,7 @@ class PromptManager {
     setupEventListeners() {
         if (this.savePromptBtn) this.savePromptBtn.addEventListener('click', () => this.savePrompt());
         if (this.newPromptBtn) this.newPromptBtn.addEventListener('click', () => this.showNewPromptModal());
+        if (this.attachFileBtn) this.attachFileBtn.addEventListener('click', () => this.attachFile());
         if (this.confirmDeleteBtn) this.confirmDeleteBtn.addEventListener('click', () => this.confirmDelete());
         if (this.cancelDeleteBtn) this.cancelDeleteBtn.addEventListener('click', () => this.closeDeleteModal());
         if (this.closeViewEditBtn) this.closeViewEditBtn.addEventListener('click', () => this.closeViewEditModal());
@@ -165,18 +171,30 @@ class PromptManager {
             }
         });
 
-        // Search input listener
+        // Search input listeners
         if (this.searchInput) {
             this.searchInput.addEventListener('input', () => {
-                this.filterPrompts();
+                this.filterPrompts('prompts');
             });
         }
 
-        // Sort select listener
+        if (this.communitySearchInput) {
+            this.communitySearchInput.addEventListener('input', () => {
+                this.filterPrompts('community');
+            });
+        }
+
+        // Sort select listeners
         if (this.sortSelect) {
             this.sortSelect.addEventListener('change', () => {
                 this.sortPrompts();
                 this.renderPrompts();
+            });
+        }
+
+        if (this.communitySortSelect) {
+            this.communitySortSelect.addEventListener('change', () => {
+                // Community sort functionality could be implemented here
             });
         }
 
@@ -208,28 +226,17 @@ class PromptManager {
         if (selectedTab) selectedTab.classList.add('active');
         if (selectedContent) selectedContent.classList.add('active');
 
-        // Show/hide search and sort for certain tabs
-        if (tabName === 'prompts' || tabName === 'community') {
-            this.searchSortContainer.style.display = 'flex';
-        } else {
-            this.searchSortContainer.style.display = 'none';
-        }
-
         // Additional tab-specific logic
         if (tabName === 'prompts') {
             this.renderPrompts();
         }
     }
 
-    filterPrompts() {
-        if (!this.searchInput) return;
-
-        const searchTerm = this.searchInput.value.toLowerCase();
-        const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
-
-        if (activeTab === 'prompts') {
-            // Filter user prompts
+    filterPrompts(tabName) {
+        if (tabName === 'prompts' && this.searchInput) {
+            const searchTerm = this.searchInput.value.toLowerCase();
             const promptCards = document.querySelectorAll('#promptsContainer .prompt-card');
+
             promptCards.forEach(card => {
                 const title = card.querySelector('.prompt-title').textContent.toLowerCase();
                 const content = card.querySelector('.prompt-content').textContent.toLowerCase();
@@ -240,9 +247,10 @@ class PromptManager {
                     card.style.display = 'none';
                 }
             });
-        } else if (activeTab === 'community') {
-            // Filter community prompts
+        } else if (tabName === 'community' && this.communitySearchInput) {
+            const searchTerm = this.communitySearchInput.value.toLowerCase();
             const communityCards = document.querySelectorAll('#communityTab .prompt-card');
+
             communityCards.forEach(card => {
                 const title = card.querySelector('.prompt-title').textContent.toLowerCase();
                 const content = card.querySelector('.prompt-content').textContent.toLowerCase();
@@ -263,16 +271,24 @@ class PromptManager {
 
         switch (sortOption) {
             case 'newest':
-                this.prompts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                this.prompts.sort((a, b) => b.timestamp - a.timestamp);
                 break;
             case 'oldest':
-                this.prompts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                this.prompts.sort((a, b) => a.timestamp - b.timestamp);
                 break;
             case 'az':
-                this.prompts.sort((a, b) => a.title.localeCompare(b.title));
+                this.prompts.sort((a, b) => {
+                    const titleA = a.content.substring(0, 20).toLowerCase();
+                    const titleB = b.content.substring(0, 20).toLowerCase();
+                    return titleA.localeCompare(titleB);
+                });
                 break;
             case 'za':
-                this.prompts.sort((a, b) => b.title.localeCompare(a.title));
+                this.prompts.sort((a, b) => {
+                    const titleA = a.content.substring(0, 20).toLowerCase();
+                    const titleB = b.content.substring(0, 20).toLowerCase();
+                    return titleB.localeCompare(titleA);
+                });
                 break;
         }
     }
@@ -520,62 +536,94 @@ class PromptManager {
         this.promptsContainer.innerHTML = '';
 
         if (this.prompts.length === 0) {
-            this.promptsContainer.innerHTML = '<div class="placeholder"><p>No prompts saved yet.<br>Create your first prompt!</p></div>';
+            this.promptsContainer.innerHTML = `
+                <div class="placeholder">
+                    <p>No prompts yet. Create your first prompt!</p>
+                </div>
+            `;
             return;
         }
 
-        this.sortPrompts();
+        // Sort prompts
+        const sortedPrompts = [...this.prompts];
+        const sortMethod = this.sortSelect ? this.sortSelect.value : 'newest';
 
-        this.prompts.forEach(prompt => {
+        switch (sortMethod) {
+            case 'newest':
+                sortedPrompts.sort((a, b) => {
+                    // Use createdAt if timestamp is not available
+                    return (b.timestamp || new Date(b.createdAt).getTime()) -
+                        (a.timestamp || new Date(a.createdAt).getTime());
+                });
+                break;
+            case 'oldest':
+                sortedPrompts.sort((a, b) => {
+                    // Use createdAt if timestamp is not available
+                    return (a.timestamp || new Date(a.createdAt).getTime()) -
+                        (b.timestamp || new Date(b.createdAt).getTime());
+                });
+                break;
+            case 'az':
+                sortedPrompts.sort((a, b) => {
+                    const titleA = a.content.substring(0, 20).toLowerCase();
+                    const titleB = b.content.substring(0, 20).toLowerCase();
+                    return titleA.localeCompare(titleB);
+                });
+                break;
+            case 'za':
+                sortedPrompts.sort((a, b) => {
+                    const titleA = a.content.substring(0, 20).toLowerCase();
+                    const titleB = b.content.substring(0, 20).toLowerCase();
+                    return titleB.localeCompare(titleA);
+                });
+                break;
+        }
+
+        sortedPrompts.forEach(prompt => {
             const card = document.createElement('div');
             card.className = 'prompt-card';
             card.setAttribute('data-prompt-id', prompt.id);
 
-            const title = document.createElement('h3');
-            title.className = 'prompt-title';
-            title.textContent = prompt.title;
+            // Get first line or first 30 chars for title
+            const lines = prompt.content.split('\n');
+            const title = lines[0].length > 0 ?
+                (lines[0].length > 40 ? lines[0].substring(0, 40) + '...' : lines[0]) :
+                'Untitled Prompt';
 
-            const content = document.createElement('p');
-            content.className = 'prompt-content';
-            content.textContent = prompt.content;
+            // Get a preview of the content
+            const contentPreview = prompt.content.length > 100 ?
+                prompt.content.substring(0, 100) + '...' :
+                prompt.content;
 
-            const meta = document.createElement('div');
-            meta.className = 'prompt-meta';
+            // Format the date correctly
+            const date = new Date(prompt.timestamp || prompt.createdAt);
+            const hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+            const formattedDate = `${date.toLocaleDateString()} ${displayHours}:${minutes} ${ampm}`;
 
-            const date = document.createElement('span');
-            date.textContent = new Date(prompt.createdAt).toLocaleString();
-
-            const actions = document.createElement('div');
-            actions.className = 'prompt-actions';
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'btn-icon btn-delete';
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteBtn.title = 'Delete';
-
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'btn-icon btn-copy';
-            copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
-            copyBtn.title = 'Copy';
-
-            const sendBtn = document.createElement('button');
-            sendBtn.className = 'btn-icon btn-send send';
-            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-            sendBtn.title = 'Send';
-
-            actions.appendChild(deleteBtn);
-            actions.appendChild(copyBtn);
-            actions.appendChild(sendBtn);
-
-            meta.appendChild(date);
-            meta.appendChild(actions);
-
-            card.appendChild(title);
-            card.appendChild(content);
-            card.appendChild(meta);
+            card.innerHTML = `
+                <h3 class="prompt-title">${title}</h3>
+                <p class="prompt-content">${contentPreview}</p>
+                <div class="prompt-meta">
+                    <span>${formattedDate}</span>
+                    <div class="prompt-actions">
+                        <button class="btn-icon btn-copy" title="Copy"><i class="fas fa-copy"></i></button>
+                        <button class="btn-icon btn-send send" title="Send"><i class="fas fa-paper-plane"></i></button>
+                        <button class="btn-icon btn-delete delete" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
 
             this.promptsContainer.appendChild(card);
         });
+    }
+
+    // Add method for file attachment
+    attachFile() {
+        // File attachment functionality will be implemented in the future
+        this.showToast('File attachment coming soon!', 'info');
     }
 }
 
@@ -587,4 +635,17 @@ function initializePromptManager() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', initializePromptManager);
+document.addEventListener('DOMContentLoaded', () => {
+    window.promptManager = new PromptManager();
+
+    // Ensure CSS styles for tab display are applied correctly
+    setTimeout(() => {
+        const manager = window.promptManager;
+        // Force active tab to be reshown
+        const activeTab = document.querySelector('.tab.active');
+        if (activeTab) {
+            const tabName = activeTab.getAttribute('data-tab');
+            manager.showTab(tabName);
+        }
+    }, 100);
+});
