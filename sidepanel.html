@@ -155,6 +155,7 @@
             height: 32px;
             border-radius: 4px;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
 
         .toast {
@@ -167,6 +168,41 @@
             font-size: 14px;
             opacity: 0;
             transition: opacity 0.3s ease;
+            z-index: 3000;
+            /* Ensure toast is above all modals */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            min-width: 200px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Styling for toast with expandable details */
+        .toast-with-details {
+            max-width: 400px;
+            text-align: left;
+            padding: 12px 20px;
+        }
+
+        .toast-with-details details {
+            margin-top: 8px;
+            cursor: pointer;
+        }
+
+        .toast-with-details summary {
+            color: var(--neon-cyan);
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            outline: none;
+        }
+
+        .toast-with-details summary:hover {
+            color: var(--neon-lime);
+        }
+
+        .toast-with-details details[open] summary {
+            margin-bottom: 8px;
+            color: var(--neon-lime);
         }
 
         .toast.show {
@@ -187,6 +223,38 @@
             padding: 20px;
             box-sizing: border-box;
         }
+
+        /* Ensure delete modal appears above edit modal */
+        #deleteModal {
+            z-index: 2100;
+        }
+
+        /* Compact delete modal */
+        #deleteModal .modal-content {
+            max-width: 280px;
+            padding: 16px;
+        }
+
+        #deleteModal h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        #deleteModal p {
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        #deleteModal .modal-actions {
+            gap: 8px;
+        }
+
+        #deleteModal .btn {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* Make toast appear above all modals */
 
         .modal.show {
             display: flex;
@@ -756,6 +824,240 @@
         .theme-data-haven.mode-dark .prompt-textarea::-webkit-scrollbar-thumb:hover {
             background-color: var(--neon-lime);
         }
+
+        /* Smaller buttons in edit modal */
+        #viewEditModal .modal-actions .btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            transition: all 0.15s ease;
+        }
+
+        #viewEditModal .modal-actions .btn i {
+            font-size: 12px;
+            margin-right: 4px;
+        }
+
+        #viewEditModal .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            /* Reduced gap */
+        }
+
+        #viewEditModal .modal-actions .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        #viewEditModal .modal-actions .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Make close button in edit modal header smaller */
+        #viewEditModal .modal-header .btn-icon {
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            padding: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Style for the copy button when showing success */
+        .btn-copy.success {
+            background: var(--success-green);
+            color: var(--midnight-blue);
+            border-color: var(--success-green);
+        }
+
+        /* Style for the send button when showing success */
+        .btn-send.success {
+            background: var(--success-green);
+            color: var(--midnight-blue);
+            border-color: var(--success-green);
+        }
+
+        .theme-data-haven.mode-dark .btn-copy.success,
+        .theme-data-haven.mode-dark .btn-send.success {
+            background: var(--success-green);
+            color: var(--midnight-blue);
+            border-color: var(--success-green);
+            box-shadow: 0 0 8px rgba(57, 255, 20, 0.5);
+        }
+
+        /* For specific buttons in modals */
+        .modal-content .btn,
+        .modal-content .btn-icon,
+        .modal-actions button,
+        .title-buttons button,
+        .input-group button,
+        .prompt-card .btn-icon {
+            cursor: pointer;
+        }
+
+        #viewEditModal .modal-header h3 {
+            cursor: default;
+        }
+
+        /* Adjust button padding and styling for icon-only buttons */
+        #viewEditModal .modal-actions .btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            transition: all 0.15s ease;
+            min-width: 36px;
+            min-height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Exception for save button which still has text */
+        #saveFromViewBtn {
+            padding: 6px 16px;
+            min-width: 120px;
+        }
+
+        /* FAQ Modal Styles */
+        .faq-content {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0 4px;
+        }
+
+        .faq-item {
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--metal-grey);
+            padding-bottom: 16px;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .faq-item h4 {
+            color: var(--neon-cyan);
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .faq-item p {
+            color: var(--text-light);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Account Modal Styles */
+        .account-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .account-info {
+            background: var(--midnight-blue);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .account-info p {
+            margin-bottom: 8px;
+        }
+
+        .free-account {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+
+        .feature-list li {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-list li i {
+            color: var(--neon-lime);
+            margin-right: 8px;
+        }
+
+        #upgradeBtn {
+            width: 100%;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Settings tab styles */
+        .settings-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .settings-buttons .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* Improved settings styles */
+        .settings-section {
+            margin-bottom: 28px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--metal-grey);
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .settings-section-title {
+            color: var(--neon-cyan);
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .account-info-preview {
+            background: var(--midnight-blue);
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .account-info-preview p {
+            margin-bottom: 8px;
+        }
+
+        .account-info-preview p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Outline transparent buttons */
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 10px 16px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline:hover {
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-full {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
     <script src="sidepanel.js"></script>
 </head>
@@ -894,7 +1196,7 @@
                                 3. Performance bottlenecks</p>
                             <div class="prompt-meta">
                                 <span>By: CodeMaster</span>
-                                <span class="rating">★★★★★</span>
+                                
                             </div>
                         </div>
                         <div class="prompt-card" data-prompt-id="rated-2">
@@ -914,7 +1216,7 @@
                                 3. Transportation options</p>
                             <div class="prompt-meta">
                                 <span>By: AdventureSeeker</span>
-                                <span class="rating">★★★★☆</span>
+                                
                             </div>
                         </div>
                         <div class="prompt-card" data-prompt-id="rated-3">
@@ -934,7 +1236,7 @@
                                 3. Provide cooking times and temperatures</p>
                             <div class="prompt-meta">
                                 <span>By: ChefExtraordinaire</span>
-                                <span class="rating">★★★★☆</span>
+                                
                             </div>
                         </div>
                     </div>
@@ -1008,15 +1310,34 @@
         <!-- Settings Tab Content -->
         <div class="tab-content" id="settingsTab">
             <div class="settings-content">
-                <div class="option">
-                    <label for="modeSelect">Mode</label>
-                    <select id="modeSelect">
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                    </select>
+                <div class="settings-section account-section">
+                    <h3 class="settings-section-title">Account</h3>
+                    <div class="account-info-preview">
+                        <p><strong>Account Status:</strong> <span class="free-account">Free Account</span></p>
+                        <p><strong>Prompts Stored:</strong> <span id="promptCount">0</span> / 50</p>
+                        <p><strong>Version:</strong> 1.0.0</p>
+                    </div>
+                    <button class="btn btn-outline btn-full" id="accountBtn">
+                        <i class="fas fa-user"></i> Manage Account
+                    </button>
                 </div>
-                <div class="modal-actions" style="justify-content: flex-start; margin-top: 16px;">
-                    <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+
+                <div class="settings-section faq-section">
+                    <h3 class="settings-section-title">Help</h3>
+                    <button class="btn btn-outline btn-full" id="faqBtn">
+                        <i class="fas fa-question-circle"></i> FAQ
+                    </button>
+                </div>
+
+                <div class="settings-section mode-section">
+                    <h3 class="settings-section-title">Appearance</h3>
+                    <div class="option">
+                        <label for="modeSelect">Theme</label>
+                        <select id="modeSelect">
+                            <option value="light">Light (coming soon)</option>
+                            <option value="dark">Dark</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1051,14 +1372,14 @@
             </div>
             <textarea class="prompt-textarea" id="viewEditTextarea"></textarea>
             <div class="modal-actions">
-                <button class="btn btn-delete" id="deleteFromViewBtn">
-                    <i class="fas fa-trash"></i> Delete
+                <button class="btn btn-delete" id="deleteFromViewBtn" title="Delete">
+                    <i class="fas fa-trash"></i>
                 </button>
-                <button class="btn btn-tertiary" id="copyFromViewBtn">
-                    <i class="fas fa-copy"></i> Copy
+                <button class="btn btn-tertiary" id="copyFromViewBtn" title="Copy">
+                    <i class="fas fa-copy"></i>
                 </button>
-                <button class="btn btn-primary" id="sendFromViewBtn">
-                    <i class="fas fa-paper-plane"></i> Send
+                <button class="btn btn-primary" id="sendFromViewBtn" title="Send">
+                    <i class="fas fa-paper-plane"></i>
                 </button>
                 <button class="btn btn-secondary" id="saveFromViewBtn">
                     <i class="fas fa-save"></i> Save Changes
@@ -1094,6 +1415,81 @@
                 <button class="btn btn-primary" id="createNewPromptBtn">
                     <i class="fas fa-plus"></i> Create
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div class="modal" id="faqModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Frequently Asked Questions</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-icon" id="closeFaqBtn" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="faq-content">
+                <div class="faq-item">
+                    <h4>What is Promptr?</h4>
+                    <p>Promptr is a prompt management tool that helps you save, organize, and reuse prompts for AI chat
+                        platforms like ChatGPT, Claude, and Grok.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>How do I edit a prompt?</h4>
+                    <p>Click on any prompt card TITLE to open the edit view, make your changes, and click "Save
+                        Changes".</p>
+                </div>
+                <div class="faq-item">
+                    <h4>How do I use Promptr?</h4>
+                    <p>Create prompts using the "New Prompt" button, then use the "Send" button to inject them into
+                        supported AI chat interfaces or copy them to your clipboard.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Which platforms are supported?</h4>
+                    <p>Promptr currently supports ChatGPT, Claude, Grok, and Gemini. More platforms will
+                        be added in future updates.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Where are my prompts stored?</h4>
+                    <p>Your prompts are stored locally in your browser's storage. They do not sync across devices yet,
+                        but this feature is coming soon.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div class="modal" id="accountModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Account Information</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-icon" id="closeAccountBtn" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="account-content">
+                <div class="account-info">
+                    <p><strong>Account Status:</strong> <span class="free-account">Free Account</span></p>
+                    <p><strong>Prompts Stored:</strong> <span id="promptCount">0</span> / 50</p>
+                    <p><strong>Version:</strong> 1.0.0</p>
+                </div>
+                <div class="account-upgrade" style="margin-top: 16px;">
+                    <h4>Upgrade to Pro (Coming Soon)</h4>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check"></i> Unlimited prompts</li>
+                        <li><i class="fas fa-check"></i> Cloud sync across devices</li>
+                        <li><i class="fas fa-check"></i> Prompt categories and tags</li>
+                        <li><i class="fas fa-check"></i> Advanced prompt features</li>
+                    </ul>
+                    <button class="btn btn-secondary" id="upgradeBtn" disabled>
+                        <i class="fas fa-crown"></i> Upgrade Coming Soon
+                    </button>
+                </div>
             </div>
         </div>
     </div>

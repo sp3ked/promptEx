@@ -44,13 +44,13 @@ async function injectPromptAndFileIntoPage(promptData) {
                 type: "success"
             });
         } else {
-            throw new Error("No suitable text input found on this page. Please make sure you're on a supported chat platform (ChatGPT, Claude, Grok).");
+            throw new Error("Make sure you're on an LLM website<details><summary>Show supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Perplexity (perplexity.ai)<br>• Bing Chat (bing.com/chat)</details>");
         }
     } catch (error) {
         console.error("Promptr: Injection error:", error);
         chrome.runtime.sendMessage({
-            action: "showToast",
-            message: `Failed to inject prompt: ${error.message}`,
+            action: "showErrorWithDetails",
+            message: error.message,
             type: "error"
         });
         throw error;
@@ -91,7 +91,13 @@ class PromptManager {
         this.createNewPromptBtn = document.getElementById('createNewPromptBtn');
         // Settings elements
         this.modeSelect = document.getElementById('modeSelect');
-        this.saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        this.faqBtn = document.getElementById('faqBtn');
+        this.accountBtn = document.getElementById('accountBtn');
+        this.faqModal = document.getElementById('faqModal');
+        this.accountModal = document.getElementById('accountModal');
+        this.closeFaqBtn = document.getElementById('closeFaqBtn');
+        this.closeAccountBtn = document.getElementById('closeAccountBtn');
+        this.promptCountEl = document.getElementById('promptCount');
         // Tab elements
         this.tabs = document.querySelectorAll('.tab');
         this.tabContents = document.querySelectorAll('.tab-content');
@@ -159,14 +165,63 @@ class PromptManager {
                         // Find the prompt content and send it
                         const content = card.querySelector('.prompt-content')?.textContent;
                         if (content) {
-                            injectPromptAndFileIntoPage({ content });
+                            // Show sending toast
+                            this.showToast('Sending prompt...', 'info');
+
+                            // Change to checkmark icon
+                            const iconElement = button.querySelector('i');
+                            if (iconElement) {
+                                // Store original classes
+                                const originalClass = iconElement.className;
+
+                                try {
+                                    // Send the prompt
+                                    injectPromptAndFileIntoPage({ content });
+
+                                    // Change to checkmark
+                                    iconElement.className = 'fas fa-check';
+                                    button.classList.add('success');
+
+                                    // Revert after timeout
+                                    setTimeout(() => {
+                                        iconElement.className = originalClass;
+                                        button.classList.remove('success');
+                                    }, 1500);
+                                } catch (error) {
+                                    // If error, revert icon immediately
+                                    iconElement.className = originalClass;
+                                    console.error('Error sending prompt:', error);
+                                }
+                            } else {
+                                // No icon element
+                                injectPromptAndFileIntoPage({ content });
+                            }
                         }
                     } else if (button.classList.contains('btn-copy')) {
                         // Copy functionality for community prompt
                         const content = card.querySelector('.prompt-content')?.textContent;
                         if (content) {
                             navigator.clipboard.writeText(content)
-                                .then(() => this.showToast('Copied to clipboard!', 'success'))
+                                .then(() => {
+                                    this.showToast('Copied to clipboard!', 'success');
+
+                                    // Change icon to checkmark
+                                    const iconElement = button.querySelector('i');
+                                    if (iconElement) {
+                                        // Store original classes
+                                        const originalClass = iconElement.className;
+
+                                        // Change to checkmark
+                                        iconElement.className = 'fas fa-check';
+                                        button.classList.add('success');
+
+                                        // Revert after timeout
+                                        setTimeout(() => {
+                                            iconElement.className = originalClass;
+                                            button.classList.remove('success');
+                                        }, 1500);
+                                    }
+                                })
                                 .catch(err => this.showToast('Failed to copy: ' + err, 'error'));
                         }
                     }
@@ -186,9 +241,6 @@ class PromptManager {
                 }
             });
         });
-
-        // Settings listeners
-        if (this.saveSettingsBtn) this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
 
         // Search input listeners
         if (this.searchInput) {
@@ -219,7 +271,34 @@ class PromptManager {
 
         chrome.runtime.onMessage.addListener((message) => {
             if (message.action === "showToast") this.showToast(message.message, message.type || 'info');
+            else if (message.action === "showErrorWithDetails") this.showErrorWithDetails(message.message, message.type || 'error');
         });
+
+        // Close modals when clicking outside of them
+        if (this.viewEditModal) {
+            this.viewEditModal.addEventListener('click', (event) => {
+                // Only close if clicking directly on the modal background, not its contents
+                if (event.target === this.viewEditModal) {
+                    this.closeViewEditModal();
+                }
+            });
+        }
+
+        if (this.deleteModal) {
+            this.deleteModal.addEventListener('click', (event) => {
+                if (event.target === this.deleteModal) {
+                    this.closeDeleteModal();
+                }
+            });
+        }
+
+        if (this.newPromptModal) {
+            this.newPromptModal.addEventListener('click', (event) => {
+                if (event.target === this.newPromptModal) {
+                    this.closeNewPromptModal();
+                }
+            });
+        }
     }
 
     setupTabNavigation() {
@@ -314,22 +393,19 @@ class PromptManager {
             const result = await chrome.storage.local.get(['mode']);
             const mode = result.mode || 'dark';
             this.applyTheme(mode);
-            if (this.modeSelect) this.modeSelect.value = mode;
+            if (this.modeSelect) {
+                this.modeSelect.value = mode;
+                // Add event listener to auto-save when mode changes
+                this.modeSelect.addEventListener('change', () => {
+                    const newMode = this.modeSelect.value;
+                    chrome.storage.local.set({ mode: newMode });
+                    this.applyTheme(newMode);
+                    this.showToast('Theme updated!', 'success');
+                });
+            }
         } catch (error) {
             console.error("Error loading settings:", error);
             this.applyTheme('dark'); // Default
-        }
-    }
-
-    async saveSettings() {
-        const mode = this.modeSelect.value;
-        try {
-            await chrome.storage.local.set({ mode });
-            this.applyTheme(mode);
-            this.showToast('Settings saved!', 'success');
-        } catch (error) {
-            console.error("Error saving settings:", error);
-            this.showToast('Failed to save settings.', 'error');
         }
     }
 
@@ -343,6 +419,18 @@ class PromptManager {
         this.toast.textContent = message;
         this.toast.className = `toast show toast-${type}`;
         this.toastTimeout = setTimeout(() => this.toast.classList.remove('show'), 3000);
+    }
+
+    showErrorWithDetails(message, type = 'error') {
+        if (!this.toast) return;
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+
+        // Set HTML content instead of text
+        this.toast.innerHTML = message;
+        this.toast.className = `toast show toast-${type} toast-with-details`;
+
+        // Set a longer timeout for messages with details
+        this.toastTimeout = setTimeout(() => this.toast.classList.remove('show'), 6000);
     }
 
     async loadPrompts() {
@@ -389,6 +477,21 @@ class PromptManager {
             this.showToast('Prompt not found.', 'error');
             return;
         }
+
+        // Find the button that was clicked
+        let buttonElement = null;
+
+        // Check if it's from the view modal
+        if (this.currentlyViewingId === id && this.sendFromViewBtn) {
+            buttonElement = this.sendFromViewBtn;
+        } else {
+            // Find in the main list
+            const card = document.querySelector(`.prompt-card[data-prompt-id="${id}"]`);
+            if (card) {
+                buttonElement = card.querySelector('.btn-send');
+            }
+        }
+
         this.showToast('Sending prompt...', 'info');
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -399,6 +502,25 @@ class PromptManager {
                 args: [{ content: prompt.content }],
                 world: 'MAIN'
             });
+
+            // Change the icon to a checkmark on success
+            if (buttonElement) {
+                const iconElement = buttonElement.querySelector('i');
+                if (iconElement) {
+                    // Store original classes
+                    const originalClass = iconElement.className;
+
+                    // Change to checkmark
+                    iconElement.className = 'fas fa-check';
+                    buttonElement.classList.add('success');
+
+                    // Revert after timeout
+                    setTimeout(() => {
+                        iconElement.className = originalClass;
+                        buttonElement.classList.remove('success');
+                    }, 1500);
+                }
+            }
         } catch (error) {
             console.error('Error sending prompt:', error);
             this.showToast(`Failed to send prompt: ${error.message}`, 'error');
@@ -411,9 +533,43 @@ class PromptManager {
             this.showToast('Error finding prompt to copy.', 'error');
             return;
         }
+
+        // Find the button that was clicked
+        let buttonElement = null;
+
+        // Check if it's from the view modal
+        if (this.currentlyViewingId === id && this.copyFromViewBtn) {
+            buttonElement = this.copyFromViewBtn;
+        } else {
+            // Find in the main list
+            const card = document.querySelector(`.prompt-card[data-prompt-id="${id}"]`);
+            if (card) {
+                buttonElement = card.querySelector('.btn-copy');
+            }
+        }
+
         try {
             await navigator.clipboard.writeText(prompt.content || '');
             this.showToast('Prompt text copied!', 'success');
+
+            // Change the icon to a checkmark
+            if (buttonElement) {
+                const iconElement = buttonElement.querySelector('i');
+                if (iconElement) {
+                    // Store original classes
+                    const originalClass = iconElement.className;
+
+                    // Change to checkmark
+                    iconElement.className = 'fas fa-check';
+                    buttonElement.classList.add('success');
+
+                    // Revert after timeout
+                    setTimeout(() => {
+                        iconElement.className = originalClass;
+                        buttonElement.classList.remove('success');
+                    }, 1500);
+                }
+            }
         } catch (err) {
             console.error('Failed to copy prompt: ', err);
             this.showToast('Failed to copy prompt text.', 'error');
@@ -593,6 +749,59 @@ function initializePromptManager() {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.promptManager = new PromptManager();
+
+    // Add event listeners for FAQ and Account buttons
+    const faqBtn = document.getElementById('faqBtn');
+    const closeFaqBtn = document.getElementById('closeFaqBtn');
+    const accountBtn = document.getElementById('accountBtn');
+    const closeAccountBtn = document.getElementById('closeAccountBtn');
+    const faqModal = document.getElementById('faqModal');
+    const accountModal = document.getElementById('accountModal');
+
+    if (faqBtn) {
+        faqBtn.addEventListener('click', () => {
+            faqModal.classList.add('show');
+        });
+    }
+
+    if (closeFaqBtn) {
+        closeFaqBtn.addEventListener('click', () => {
+            faqModal.classList.remove('show');
+        });
+    }
+
+    if (accountBtn) {
+        accountBtn.addEventListener('click', () => {
+            const promptCountEl = document.getElementById('promptCount');
+            if (promptCountEl && window.promptManager) {
+                promptCountEl.textContent = window.promptManager.prompts.length || 0;
+            }
+            accountModal.classList.add('show');
+        });
+    }
+
+    if (closeAccountBtn) {
+        closeAccountBtn.addEventListener('click', () => {
+            accountModal.classList.remove('show');
+        });
+    }
+
+    // Add click outside to close handlers for the new modals
+    if (faqModal) {
+        faqModal.addEventListener('click', (event) => {
+            if (event.target === faqModal) {
+                faqModal.classList.remove('show');
+            }
+        });
+    }
+
+    if (accountModal) {
+        accountModal.addEventListener('click', (event) => {
+            if (event.target === accountModal) {
+                accountModal.classList.remove('show');
+            }
+        });
+    }
 });
 
 // Sample full prompt content for demonstration
