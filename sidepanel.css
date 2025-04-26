@@ -1,3 +1,204 @@
+/* Main container styles */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Header styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background-color: #101418;
+    /* Even darker color */
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Tab styles - Chrome-like folder tabs */
+.tabs {
+    display: flex;
+    background-color: #0a0c10;
+    /* Much darker background */
+    padding: 0 10px;
+    position: relative;
+    height: 40px;
+    margin-bottom: 0;
+}
+
+.tabs::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: rgba(0, 212, 255, 0.1);
+    z-index: 1;
+}
+
+.tab {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease;
+    color: var(--text-light);
+    font-weight: 500;
+    margin-right: 1px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    opacity: 0.75;
+    background-color: #141820;
+    /* Darker unselected tabs */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 60px;
+    max-width: 160px;
+    margin-top: 2px;
+}
+
+.tab:hover {
+    opacity: 0.9;
+    background-color: #1D2330;
+    /* Darker hover color */
+}
+
+.tab i {
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+.tab.active {
+    color: var(--text-light);
+    opacity: 1;
+    background-color: #1E2736;
+    /* Darker active tab */
+    font-weight: 600;
+    z-index: 2;
+    height: 40px;
+    margin-bottom: -1px;
+    border: none;
+    margin-top: 0;
+}
+
+.tab-content {
+    display: none;
+    overflow-y: auto;
+    flex: 1;
+    background-color: #1E2736;
+    /* Match active tab color */
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: var(--neon-cyan);
+    color: var(--midnight-blue);
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #33DDFF;
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.7);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(0, 212, 255, 0.1);
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+/* Search container styles - left-aligned */
+#promptsSearchContainer,
+#communitySearchContainer {
+    display: flex;
+    justify-content: flex-start;
+    padding: 16px 16px 12px 16px !important;
+    margin-bottom: 0 !important;
+}
+
+.search-input-wrapper {
+    position: relative;
+    max-width: 250px;
+    width: 250px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(221, 238, 255, 0.4);
+    font-size: 12px;
+}
+
+.search-sort-container input {
+    width: 100%;
+    max-width: 250px;
+    padding: 6px 10px 6px 30px;
+    border-radius: 4px;
+    background-color: transparent;
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    color: var(--text-light);
+    font-size: 13px;
+}
+
+.search-sort-container input:focus {
+    outline: none;
+    border-color: rgba(0, 212, 255, 0.4);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.search-sort-container input::placeholder {
+    color: rgba(221, 238, 255, 0.4);
+}
+
+/* Placeholder styles */
+.placeholder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    text-align: center;
+    color: rgba(221, 238, 255, 0.6);
+}
+
+.placeholder-subtitle {
+    font-size: 0.9rem;
+    margin-top: 8px;
+    opacity: 0.7;
+}
+
 /* Search and Sort Controls */
 .search-sort-container {
     padding: 16px;
@@ -35,15 +236,6 @@
 
 .search-input::placeholder {
     color: rgba(255, 255, 255, 0.5);
-}
-
-.search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--neon-cyan);
-    font-size: 14px;
 }
 
 .sort-select {
@@ -109,4 +301,14 @@
     .sort-select {
         width: 100%;
     }
+}
+
+/* Tab contents container */
+.tab-contents-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-color: #1E2736;
+    /* Match active tab color */
 }

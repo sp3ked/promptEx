@@ -1,0 +1,188 @@
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background-color: var(--midnight-blue);
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 212, 255, 0.3);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--neon-cyan);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* Close button */
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--neon-cyan);
+}
+
+/* Modal buttons */
+.modal .btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.modal .btn-primary {
+    background-color: var(--neon-cyan);
+    color: var(--midnight-blue);
+}
+
+.modal .btn-primary:hover {
+    background-color: #33DDFF;
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.7);
+}
+
+.modal .btn-secondary {
+    background-color: transparent;
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+}
+
+.modal .btn-secondary:hover {
+    background-color: rgba(0, 212, 255, 0.1);
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.modal .btn-tertiary {
+    background-color: var(--metal-grey);
+    color: var(--text-light);
+}
+
+.modal .btn-tertiary:hover {
+    background-color: #3E444D;
+}
+
+.modal .btn-delete {
+    background-color: transparent;
+    color: var(--error-red);
+    border: 1px solid var(--error-red);
+}
+
+.modal .btn-delete:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+    box-shadow: 0 0 12px rgba(255, 68, 68, 0.3);
+}
+
+/* Specific modal styles */
+.view-edit-modal .modal-actions {
+    justify-content: space-between;
+}
+
+.view-edit-modal .modal-header {
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    padding-bottom: 16px;
+}
+
+/* FAQ Modal */
+.faq-content {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.faq-item {
+    margin-bottom: 20px;
+}
+
+.faq-item h4 {
+    color: var(--neon-cyan);
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.faq-item p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Custom scrollbar for modals */
+.modal-content::-webkit-scrollbar,
+.faq-content::-webkit-scrollbar,
+.prompt-textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track,
+.faq-content::-webkit-scrollbar-track,
+.prompt-textarea::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.faq-content::-webkit-scrollbar-thumb,
+.prompt-textarea::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.5);
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover,
+.faq-content::-webkit-scrollbar-thumb:hover,
+.prompt-textarea::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.7);
+}

@@ -1,0 +1,163 @@
+/* Theme Variables */
+:root {
+    --base-dark: #1A1E26;
+    --midnight-blue: #1E2430;
+    --neon-cyan: #00D4FF;
+    --neon-lime: #39FF14;
+    --metal-grey: #2E343D;
+    --text-light: #DDEEFF;
+    --success-green: #39FF14;
+    --error-red: #FF4444;
+}
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto Condensed', sans-serif;
+    background-color: var(--base-dark);
+    color: var(--text-light);
+    width: 400px;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+.container {
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Common Button Styles */
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+}
+
+.btn-primary {
+    background-color: var(--neon-cyan);
+    color: var(--midnight-blue);
+}
+
+.btn-primary:hover {
+    background-color: #33DDFF;
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.7);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(0, 212, 255, 0.1);
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+}
+
+.btn-tertiary {
+    background-color: var(--metal-grey);
+    color: var(--text-light);
+}
+
+.btn-tertiary:hover {
+    background-color: #3E444D;
+}
+
+.btn-delete {
+    background-color: transparent;
+    color: var(--error-red);
+    border: 1px solid var(--error-red);
+}
+
+.btn-delete:hover {
+    background-color: rgba(255, 68, 68, 0.1);
+    box-shadow: 0 0 12px rgba(255, 68, 68, 0.3);
+}
+
+.btn-icon {
+    background: none;
+    font-size: 16px;
+    padding: 4px;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    color: var(--text-light);
+}
+
+.btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--neon-cyan);
+}
+
+/* Toast Notification Styles */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 3000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.toast.show {
+    opacity: 1;
+}
+
+.toast-success {
+    background-color: rgba(57, 255, 20, 0.2);
+    border: 1px solid var(--success-green);
+    color: var(--success-green);
+}
+
+.toast-error {
+    background-color: rgba(255, 68, 68, 0.2);
+    border: 1px solid var(--error-red);
+    color: var(--error-red);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.5);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.7);
+}
