@@ -24,20 +24,28 @@
 <body class="mode-dark">
     <div class="container">
         <div class="header">
-            <h1 class="title">Promptr</h1>
+            <h1 class="title">Prompter</h1>
             <div class="header-actions">
-                <button class="btn btn-secondary" id="newPromptBtn">
+                <button id="newPromptBtn">
                     <i class="fas fa-plus"></i> New Prompt
+                </button>
+                <button id="settingsBtn" title="Settings">
+                    <i class="fas fa-cog"></i>
                 </button>
             </div>
         </div>
 
         <!-- Tabs Navigation -->
         <div class="tabs">
-            <div class="tab active" data-tab="prompts"><i class="fas fa-file-alt"></i> Prompts</div>
-            <div class="tab" data-tab="community"><i class="fas fa-users"></i> Community</div>
-            <div class="tab" data-tab="generate"><i class="fas fa-magic"></i> Generate</div>
-            <div class="tab" data-tab="settings"><i class="fas fa-cog"></i> Settings</div>
+            <div class="tab active" data-tab="prompts">
+                <i class="fas fa-book"></i> My Prompts
+            </div>
+            <div class="tab" data-tab="community">
+                <i class="fas fa-users"></i> Community
+            </div>
+            <div class="tab" data-tab="generate">
+                <i class="fas fa-magic"></i> Generate
+            </div>
         </div>
 
         <!-- Tab Content Container -->
@@ -216,75 +224,14 @@
                 </div>
             </div>
 
-            <!-- Generate Tab Content -->
+            <!-- Genetrew Tab Content -->
             <div class="tab-content" id="generateTab">
-                <div class="placeholder">
-                    <p>Generate feature coming soon!</p>
-                </div>
-            </div>
-
-            <!-- Settings Tab Content -->
-            <div class="tab-content" id="settingsTab">
-                <div class="settings-content">
-                    <form id="settingsForm">
-                        <div class="settings-section appearance-section">
-                            <h3 class="settings-section-title">Appearance</h3>
-                            <div class="option">
-                                <label for="themeSelect">Theme</label>
-                                <select id="themeSelect">
-                                    <option value="light">Light</option>
-                                    <option value="dark">Dark</option>
-                                </select>
-                            </div>
-                            <div class="option">
-                                <label for="fontSizeSelect">Font Size</label>
-                                <select id="fontSizeSelect">
-                                    <option value="14">Small</option>
-                                    <option value="16">Medium</option>
-                                    <option value="18">Large</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="settings-section behavior-section">
-                            <h3 class="settings-section-title">Behavior</h3>
-                            <div class="option switch-option">
-                                <label for="autoSaveToggle">Auto-save prompts</label>
-                                <label class="switch">
-                                    <input type="checkbox" id="autoSaveToggle">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="settings-actions">
-                            <button type="button" class="btn btn-tertiary" id="resetSettingsBtn">
-                                <i class="fas fa-undo"></i> Reset
-                            </button>
-                            <button type="button" class="btn btn-primary" id="saveSettingsBtn">
-                                <i class="fas fa-save"></i> Save
-                            </button>
-                        </div>
-                    </form>
-
-                    <div class="settings-section account-section">
-                        <h3 class="settings-section-title">Account</h3>
-                        <div class="account-info-preview">
-                            <p><strong>Account Status:</strong> <span class="free-account">Free Account</span></p>
-                            <p><strong>Prompts Stored:</strong> <span id="promptCount">0</span> / 50</p>
-                            <p><strong>Version:</strong> 1.0.0</p>
-                        </div>
-                        <button class="btn btn-outline btn-full" id="accountBtn">
-                            <i class="fas fa-user"></i> Manage Account
-                        </button>
-                    </div>
-
-                    <div class="settings-section faq-section">
-                        <h3 class="settings-section-title">Help</h3>
-                        <button class="btn btn-outline btn-full" id="faqBtn">
-                            <i class="fas fa-question-circle"></i> FAQ
-                        </button>
-                    </div>
+                <div class="generate-placeholder">
+                    <i class="fas fa-magic" style="font-size: 48px; margin-bottom: 20px;"></i>
+                    <h2>Prompt Generator Coming Soon</h2>
+                    <p class="generate-description">Our AI-powered prompt generator will help you create effective
+                        prompts tailored to your needs.</p>
+                    <p class="generate-description">Stay tuned for this exciting feature in our next update!</p>
                 </div>
             </div>
         </div>
@@ -477,6 +424,75 @@
         </div>
     </div>
 
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="btn-icon" id="closeSettingsModalBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="settings-content">
+                <form id="settingsForm">
+                    <div class="settings-section appearance-section">
+                        <h3 class="settings-section-title">Appearance</h3>
+                        <div class="option">
+                            <label for="themeSelect">Theme</label>
+                            <select id="themeSelect" class="form-control">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                            </select>
+                        </div>
+                        <div class="option">
+                            <label for="fontSizeSelect">Font Size</label>
+                            <select id="fontSizeSelect" class="form-control">
+                                <option value="14">Small</option>
+                                <option value="16">Medium</option>
+                                <option value="18">Large</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section behavior-section">
+                        <h3 class="settings-section-title">Behavior</h3>
+                        <div class="option switch-option">
+                            <label for="autoSaveToggle">Auto-save prompts</label>
+                            <label class="switch">
+                                <input type="checkbox" id="autoSaveToggle">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section account-section">
+                        <h3 class="settings-section-title">Account</h3>
+                        <div class="account-info-preview">
+                            <p><strong>Account Status:</strong> <span class="free-account">Free Account</span></p>
+                            <p><strong>Prompts Stored:</strong> <span id="promptCount">0</span> / 50</p>
+                            <p><strong>Version:</strong> 1.0.0</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-section faq-section">
+                        <h3 class="settings-section-title">Help</h3>
+                        <button type="button" class="btn btn-outline btn-full" id="faqBtn">
+                            <i class="fas fa-question-circle"></i> FAQ
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-tertiary" id="resetSettingsBtn">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button type="button" class="btn btn-primary" id="saveSettingsBtn">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Load JavaScript modules in correct dependency order -->
     <!-- First load utility modules -->
     <script src="js/utils/ui.js"></script>
@@ -486,7 +502,7 @@
     <!-- Then load tab modules -->
     <script src="js/tabs/prompts.js"></script>
     <script src="js/tabs/community.js"></script>
-    <script src="js/tabs/settings.js"></script>
+    <script src="js/tabs/generate.js"></script>
 
     <!-- Finally load the main app -->
     <script src="js/main.js"></script>

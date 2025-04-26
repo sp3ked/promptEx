@@ -25,7 +25,7 @@
     padding: 24px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 212, 255, 0.3);
     width: 90%;
-    max-width: 500px;
+    max-width: min(500px, 90%);
     position: relative;
     border: 1px solid rgba(0, 212, 255, 0.2);
     max-height: 90vh;
@@ -37,6 +37,8 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .modal-header h3 {
@@ -44,6 +46,7 @@
     color: var(--neon-cyan);
     font-size: 1.2rem;
     font-weight: 700;
+    flex: 1;
 }
 
 .modal-actions {
@@ -51,6 +54,32 @@
     justify-content: flex-end;
     gap: 12px;
     margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 500px) {
+    .modal-content {
+        padding: 16px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .view-edit-modal .modal-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .modal-header {
+        margin-bottom: 12px;
+    }
 }
 
 /* Close button */
@@ -67,6 +96,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .btn-icon:hover {
@@ -185,4 +215,144 @@
 .faq-content::-webkit-scrollbar-thumb:hover,
 .prompt-textarea::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 212, 255, 0.7);
+}
+
+/* Active status for modals */
+.modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* Settings Modal */
+.settings-modal {
+    width: 90%;
+    max-width: min(600px, 90%);
+}
+
+.settings-content {
+    padding: 10px 0;
+}
+
+.settings-section {
+    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 16px;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.settings-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-teal);
+    margin-bottom: 16px;
+}
+
+.option {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.option label {
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.option select {
+    width: 150px;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: var(--text-light);
+}
+
+.option.switch-option {
+    justify-content: space-between;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(203, 213, 225, 0.1);
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--text-light);
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: var(--primary-teal);
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px var(--primary-teal);
+}
+
+input:checked+.slider:before {
+    transform: translateX(26px);
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.account-info-preview p {
+    margin: 8px 0;
+    color: var(--text-medium);
+}
+
+.free-account {
+    color: var(--primary-teal);
+    font-weight: 500;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--text-light);
+    color: var(--text-light);
+}
+
+.btn-outline:hover {
+    background-color: rgba(221, 238, 255, 0.1);
+}
+
+.btn-full {
+    width: 100%;
+    margin-top: 8px;
 }

@@ -1,10 +1,12 @@
 /**
- * Prompts tab module for handling prompt-related functionality
+ * Prompts Tab module for managing user-saved prompts
  */
 
 const PromptsTab = {
+    elements: {},
+
     /**
-     * Initialize prompts tab
+     * Initialize the prompts tab
      */
     init() {
         this.initializeElements();
@@ -16,61 +18,67 @@ const PromptsTab = {
      * Initialize DOM elements
      */
     initializeElements() {
-        this.promptsContainer = document.getElementById('promptsContainer');
-        this.newPromptBtn = document.getElementById('newPromptBtn');
-        this.newPromptModal = document.getElementById('newPromptModal');
-        this.newPromptTitle = document.getElementById('newPromptTitle');
-        this.newPromptTextarea = document.getElementById('newPromptTextarea');
-        this.closeNewPromptBtn = document.getElementById('closeNewPromptBtn');
-        this.cancelNewPromptBtn = document.getElementById('cancelNewPromptBtn');
-        this.createNewPromptBtn = document.getElementById('createNewPromptBtn');
-        this.searchInput = document.getElementById('searchInput');
-        this.viewEditModal = document.getElementById('viewEditModal');
-        this.viewEditTitle = document.getElementById('viewEditTitle');
-        this.viewEditTextarea = document.getElementById('viewEditTextarea');
-        this.closeViewEditBtn = document.getElementById('closeViewEditBtn');
-        this.deleteFromViewBtn = document.getElementById('deleteFromViewBtn');
-        this.copyFromViewBtn = document.getElementById('copyFromViewBtn');
-        this.sendFromViewBtn = document.getElementById('sendFromViewBtn');
-        this.saveFromViewBtn = document.getElementById('saveFromViewBtn');
-        this.deleteModal = document.getElementById('deleteModal');
-        this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-        this.cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-
-        this.pendingDeleteId = null;
-        this.currentlyViewingId = null;
-        this.currentlyViewingTitle = null;
+        this.elements = {
+            promptsContainer: document.getElementById('promptsContainer'),
+            searchInput: document.getElementById('searchInput'),
+            newPromptModal: document.getElementById('newPromptModal'),
+            newPromptTitle: document.getElementById('newPromptTitle'),
+            newPromptTextarea: document.getElementById('newPromptTextarea'),
+            createNewPromptBtn: document.getElementById('createNewPromptBtn'),
+            closeNewPromptBtn: document.getElementById('closeNewPromptBtn'),
+            cancelNewPromptBtn: document.getElementById('cancelNewPromptBtn'),
+            viewEditModal: document.getElementById('viewEditModal'),
+            viewEditTitle: document.getElementById('viewEditTitle'),
+            viewEditTextarea: document.getElementById('viewEditTextarea'),
+            closeViewEditBtn: document.getElementById('closeViewEditBtn'),
+            saveFromViewBtn: document.getElementById('saveFromViewBtn'),
+            deleteFromViewBtn: document.getElementById('deleteFromViewBtn'),
+            copyFromViewBtn: document.getElementById('copyFromViewBtn'),
+            sendFromViewBtn: document.getElementById('sendFromViewBtn'),
+            deleteModal: document.getElementById('deleteModal'),
+            confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+            cancelDeleteBtn: document.getElementById('cancelDeleteBtn')
+        };
     },
 
     /**
      * Bind event listeners
      */
     bindEvents() {
-        // New prompt button
-        this.newPromptBtn.addEventListener('click', () => this.showNewPromptModal());
+        // New prompt button from header
+        document.getElementById('newPromptBtn').addEventListener('click', () => this.showNewPromptModal());
 
         // Search input
-        this.searchInput.addEventListener('input', (e) => this.filterPrompts(e.target.value));
+        this.elements.searchInput.addEventListener('input', () => this.filterPrompts());
 
-        // Create prompt form
-        this.createNewPromptBtn.addEventListener('click', () => this.createNewPrompt());
-
-        // Cancel new prompt
-        this.cancelNewPromptBtn.addEventListener('click', () => this.closeNewPromptModal());
-
-        // Close new prompt modal
-        this.closeNewPromptBtn.addEventListener('click', () => this.closeNewPromptModal());
+        // New prompt modal
+        this.elements.closeNewPromptBtn.addEventListener('click', () => this.closeModal(this.elements.newPromptModal));
+        this.elements.cancelNewPromptBtn.addEventListener('click', () => this.closeModal(this.elements.newPromptModal));
+        this.elements.createNewPromptBtn.addEventListener('click', () => this.createNewPrompt());
 
         // View/Edit modal
-        this.closeViewEditBtn.addEventListener('click', () => this.closeViewEditModal());
-        this.deleteFromViewBtn.addEventListener('click', () => this.deletePrompt(this.currentlyViewingId));
-        this.copyFromViewBtn.addEventListener('click', () => this.copyPrompt(this.currentlyViewingId));
-        this.sendFromViewBtn.addEventListener('click', () => this.sendPrompt(this.currentlyViewingId));
-        this.saveFromViewBtn.addEventListener('click', () => this.savePromptFromView());
+        this.elements.closeViewEditBtn.addEventListener('click', () => this.closeModal(this.elements.viewEditModal));
+        this.elements.saveFromViewBtn.addEventListener('click', () => this.updatePrompt());
+        this.elements.deleteFromViewBtn.addEventListener('click', () => this.showDeleteConfirmation());
+        this.elements.copyFromViewBtn.addEventListener('click', () => this.copyCurrentPromptToClipboard());
+        this.elements.sendFromViewBtn.addEventListener('click', () => this.sendCurrentPromptToActiveTab());
 
-        // Delete modal
-        this.confirmDeleteBtn.addEventListener('click', () => this.confirmDelete());
-        this.cancelDeleteBtn.addEventListener('click', () => this.closeDeleteModal());
+        // Delete confirmation modal
+        this.elements.confirmDeleteBtn.addEventListener('click', () => this.deletePrompt());
+        this.elements.cancelDeleteBtn.addEventListener('click', () => this.closeModal(this.elements.deleteModal));
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === this.elements.newPromptModal) {
+                this.closeModal(this.elements.newPromptModal);
+            }
+            if (e.target === this.elements.viewEditModal) {
+                this.closeModal(this.elements.viewEditModal);
+            }
+            if (e.target === this.elements.deleteModal) {
+                this.closeModal(this.elements.deleteModal);
+            }
+        });
     },
 
     /**
@@ -78,21 +86,49 @@ const PromptsTab = {
      */
     loadPrompts() {
         const prompts = StorageManager.getPrompts();
-        this.promptsContainer.innerHTML = '';
+        this.elements.promptsContainer.innerHTML = '';
 
         if (prompts.length === 0) {
-            this.promptsContainer.innerHTML = '<div class="placeholder">No prompts yet. Create one!</div>';
+            this.elements.promptsContainer.innerHTML = `
+                <div class="placeholder">
+                    <p>You don't have any saved prompts yet.</p>
+                    <button class="btn btn-primary" id="empty-new-prompt-btn">Create Your First Prompt</button>
+                </div>
+            `;
+            document.getElementById('empty-new-prompt-btn').addEventListener('click', () => this.showNewPromptModal());
             return;
         }
 
         prompts.forEach(prompt => {
-            this.promptsContainer.appendChild(this.createPromptCard(prompt));
+            this.elements.promptsContainer.appendChild(this.createPromptCard(prompt));
         });
+    },
 
-        // Update prompt count
-        const promptCountElements = document.querySelectorAll('#promptCount');
-        promptCountElements.forEach(el => {
-            el.textContent = prompts.length;
+    /**
+     * Filter prompts based on search input
+     */
+    filterPrompts() {
+        const searchTerm = this.elements.searchInput.value.toLowerCase();
+        const prompts = StorageManager.getPrompts();
+        this.elements.promptsContainer.innerHTML = '';
+
+        const filteredPrompts = prompts.filter(prompt =>
+            prompt.title.toLowerCase().includes(searchTerm) ||
+            prompt.content.toLowerCase().includes(searchTerm) ||
+            (prompt.tags && prompt.tags.toLowerCase().includes(searchTerm))
+        );
+
+        if (filteredPrompts.length === 0) {
+            this.elements.promptsContainer.innerHTML = `
+                <div class="placeholder">
+                    <p>No prompts found matching "${searchTerm}"</p>
+                </div>
+            `;
+            return;
+        }
+
+        filteredPrompts.forEach(prompt => {
+            this.elements.promptsContainer.appendChild(this.createPromptCard(prompt));
         });
     },
 
@@ -104,247 +140,236 @@ const PromptsTab = {
     createPromptCard(prompt) {
         const card = document.createElement('div');
         card.className = 'prompt-card';
-        card.dataset.promptId = prompt.id;
+        card.dataset.id = prompt.id;
+
+        // Sanitize HTML content
+        const sanitizedTitle = UIManager.sanitizeHtml(prompt.title);
+        const sanitizedContent = UIManager.sanitizeHtml(prompt.content);
+
+        // Format the date
+        const createdDate = new Date(prompt.createdAt);
+        const formattedDate = createdDate.toLocaleDateString();
+
+        // Create tags HTML if tags exist
+        let tagsHtml = '';
+        if (prompt.tags && prompt.tags.length > 0) {
+            const tagsList = prompt.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+            tagsHtml = `
+                <div class="prompt-tags">
+                    ${tagsList.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                </div>
+            `;
+        }
 
         card.innerHTML = `
             <h3 class="prompt-title">
-                <span class="prompt-title-text" title="Click to edit">${UIManager.sanitizeHtml(prompt.title)}</span>
+                <span class="prompt-title-text">${sanitizedTitle}</span>
                 <div class="title-buttons">
                     <button class="btn-icon btn-copy" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
                     <button class="btn-icon btn-send send" title="Send to active tab"><i class="fas fa-paper-plane"></i></button>
                     <button class="btn-icon delete" title="Delete prompt"><i class="fas fa-trash"></i></button>
                 </div>
             </h3>
-            <p class="prompt-content">${UIManager.sanitizeHtml(prompt.content)}</p>
+            <p class="prompt-content">${sanitizedContent}</p>
             <div class="prompt-meta">
-                <span>Created: ${new Date(prompt.createdAt).toLocaleDateString()}</span>
-                <span><i class="fas fa-edit"></i> Edit</span>
+                <span>Created: ${formattedDate}</span>
             </div>
         `;
 
-        // Add event listeners
-        // Title click opens edit mode
-        card.querySelector('.prompt-title-text').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showViewEditModal(prompt);
-        });
-
-        // Content click also opens edit mode
-        card.querySelector('.prompt-content').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showViewEditModal(prompt);
-        });
-
-        // Edit text in meta also opens edit mode
-        card.querySelector('.prompt-meta span:last-child').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showViewEditModal(prompt);
-        });
-
+        // Add event listeners to the card buttons
         card.querySelector('.btn-copy').addEventListener('click', (e) => {
             e.stopPropagation();
-            this.copyPrompt(prompt.id);
+            this.copyPromptToClipboard(prompt);
         });
 
         card.querySelector('.btn-send').addEventListener('click', (e) => {
             e.stopPropagation();
-            this.sendPrompt(prompt.id);
+            this.sendPromptToActiveTab(prompt);
         });
 
         card.querySelector('.delete').addEventListener('click', (e) => {
             e.stopPropagation();
-            this.showDeleteModal(prompt.id);
+            this.showDeleteConfirmationForPrompt(prompt.id);
+        });
+
+        // Make the whole card clickable to view/edit the prompt
+        card.addEventListener('click', () => {
+            this.showViewEditPromptModal(prompt);
         });
 
         return card;
     },
 
     /**
-     * Filter prompts based on search query
-     * @param {string} query Search query
-     */
-    filterPrompts(query) {
-        const prompts = StorageManager.getPrompts();
-        const filtered = prompts.filter(prompt =>
-            prompt.title.toLowerCase().includes(query.toLowerCase()) ||
-            prompt.content.toLowerCase().includes(query.toLowerCase())
-        );
-
-        this.promptsContainer.innerHTML = '';
-
-        if (filtered.length === 0) {
-            this.promptsContainer.innerHTML = '<div class="placeholder">No matching prompts found.</div>';
-            return;
-        }
-
-        filtered.forEach(prompt => {
-            this.promptsContainer.appendChild(this.createPromptCard(prompt));
-        });
-    },
-
-    /**
-     * Show new prompt modal
+     * Show the modal for creating a new prompt
      */
     showNewPromptModal() {
-        this.newPromptModal.classList.add('show');
-        // Focus title input for better UX
-        setTimeout(() => this.newPromptTitle.focus(), 100);
-    },
-
-    /**
-     * Close new prompt modal
-     */
-    closeNewPromptModal() {
-        this.newPromptModal.classList.remove('show');
-        this.newPromptTitle.value = '';
-        this.newPromptTextarea.value = '';
+        this.elements.newPromptTitle.value = '';
+        this.elements.newPromptTextarea.value = '';
+        this.elements.newPromptModal.classList.add('active');
     },
 
     /**
      * Create a new prompt
      */
     createNewPrompt() {
-        const title = this.newPromptTitle.value.trim();
-        const content = this.newPromptTextarea.value.trim();
+        const title = this.elements.newPromptTitle.value.trim();
+        const content = this.elements.newPromptTextarea.value.trim();
 
         if (!title || !content) {
-            UIManager.showToast('Please fill in all fields', 'error');
+            UIManager.showToast('Title and content are required!', 'error');
             return;
         }
 
-        const success = StorageManager.savePrompt({ title, content });
+        const promptData = { title, content, tags: '' };
+        const success = StorageManager.savePrompt(promptData);
+
         if (success) {
-            this.closeNewPromptModal();
-            this.loadPrompts();
             UIManager.showToast('Prompt created successfully!', 'success');
+            this.closeModal(this.elements.newPromptModal);
+            this.loadPrompts();
         } else {
-            UIManager.showToast('Error creating prompt', 'error');
+            UIManager.showToast('There was an error saving the prompt.', 'error');
         }
     },
 
     /**
-     * Show view/edit modal
+     * Show the modal for viewing/editing a prompt
      * @param {Object} prompt Prompt to view/edit
      */
-    showViewEditModal(prompt) {
-        this.currentlyViewingId = prompt.id;
-        this.currentlyViewingTitle = prompt.title;
-        this.viewEditTitle.textContent = 'Edit: ' + prompt.title;
-        this.viewEditTextarea.value = prompt.content;
-        this.viewEditModal.classList.add('show');
-        // Focus textarea for better UX
-        setTimeout(() => this.viewEditTextarea.focus(), 100);
+    showViewEditPromptModal(prompt) {
+        this.elements.viewEditTitle.textContent = prompt.title;
+        this.elements.viewEditTextarea.value = prompt.content;
+        this.elements.viewEditModal.dataset.id = prompt.id;
+        this.elements.viewEditModal.classList.add('active');
     },
 
     /**
-     * Close view/edit modal
+     * Update the current prompt
      */
-    closeViewEditModal() {
-        this.viewEditModal.classList.remove('show');
-        this.currentlyViewingId = null;
-        this.currentlyViewingTitle = null;
-    },
+    updatePrompt() {
+        const id = this.elements.viewEditModal.dataset.id;
+        const content = this.elements.viewEditTextarea.value.trim();
+        const title = this.elements.viewEditTitle.textContent.trim();
 
-    /**
-     * Save prompt from view/edit modal
-     */
-    savePromptFromView() {
-        if (!this.currentlyViewingId) return;
-
-        const content = this.viewEditTextarea.value.trim();
         if (!content) {
-            UIManager.showToast('Content cannot be empty', 'error');
+            UIManager.showToast('Content cannot be empty!', 'error');
             return;
         }
 
-        const success = StorageManager.updatePrompt(this.currentlyViewingId, { content });
+        const promptData = { content, title };
+        const success = StorageManager.updatePrompt(id, promptData);
+
         if (success) {
-            this.closeViewEditModal();
+            UIManager.showToast('Prompt updated successfully!', 'success');
+            this.closeModal(this.elements.viewEditModal);
             this.loadPrompts();
-            UIManager.showToast(`"${this.currentlyViewingTitle}" updated successfully!`, 'success');
         } else {
-            UIManager.showToast('Error updating prompt', 'error');
+            UIManager.showToast('There was an error updating the prompt.', 'error');
         }
     },
 
     /**
-     * Show delete confirmation modal
-     * @param {string} id ID of prompt to delete
+     * Show delete confirmation for a specific prompt
+     * @param {string} id Prompt ID to delete
      */
-    showDeleteModal(id) {
-        const prompts = StorageManager.getPrompts();
-        const prompt = prompts.find(p => p.id === id);
-
-        if (prompt) {
-            document.querySelector('#deleteModal p').textContent =
-                `Are you sure you want to delete the prompt "${prompt.title}"?`;
-        }
-
-        this.pendingDeleteId = id;
-        this.deleteModal.classList.add('show');
+    showDeleteConfirmationForPrompt(id) {
+        this.elements.deleteModal.dataset.id = id;
+        this.elements.deleteModal.classList.add('active');
     },
 
     /**
-     * Close delete confirmation modal
+     * Show delete confirmation for the current prompt
      */
-    closeDeleteModal() {
-        this.deleteModal.classList.remove('show');
-        this.pendingDeleteId = null;
+    showDeleteConfirmation() {
+        const id = this.elements.viewEditModal.dataset.id;
+        this.showDeleteConfirmationForPrompt(id);
     },
 
     /**
-     * Confirm and execute prompt deletion
+     * Delete the prompt with ID from the delete modal
      */
-    confirmDelete() {
-        if (!this.pendingDeleteId) return;
+    deletePrompt() {
+        const id = this.elements.deleteModal.dataset.id;
+        if (!id) return;
 
-        // Get prompt title before deletion
-        const prompts = StorageManager.getPrompts();
-        const prompt = prompts.find(p => p.id === this.pendingDeleteId);
-        const promptTitle = prompt ? prompt.title : 'Prompt';
-
-        const success = StorageManager.deletePrompt(this.pendingDeleteId);
+        const success = StorageManager.deletePrompt(id);
         if (success) {
-            this.closeDeleteModal();
-            this.closeViewEditModal();
+            UIManager.showToast('Prompt deleted successfully!', 'success');
+            this.closeModal(this.elements.deleteModal);
+            this.closeModal(this.elements.viewEditModal);
             this.loadPrompts();
-            UIManager.showToast(`"${promptTitle}" deleted successfully!`, 'success');
         } else {
-            UIManager.showToast('Error deleting prompt', 'error');
+            UIManager.showToast('There was an error deleting the prompt.', 'error');
         }
+    },
+
+    /**
+     * Copy current prompt content to clipboard
+     */
+    copyCurrentPromptToClipboard() {
+        const content = this.elements.viewEditTextarea.value;
+        this.copyTextToClipboard(content);
+    },
+
+    /**
+     * Send current prompt to active tab
+     */
+    sendCurrentPromptToActiveTab() {
+        const content = this.elements.viewEditTextarea.value;
+        this.sendTextToActiveTab(content);
     },
 
     /**
      * Copy prompt content to clipboard
-     * @param {string} id ID of prompt to copy
+     * @param {Object} prompt Prompt to copy
      */
-    async copyPrompt(id) {
-        const prompts = StorageManager.getPrompts();
-        const prompt = prompts.find(p => p.id === id);
-        if (!prompt) return;
+    copyPromptToClipboard(prompt) {
+        this.copyTextToClipboard(prompt.content);
+    },
 
+    /**
+     * Copy text to clipboard
+     * @param {string} text Text to copy
+     */
+    copyTextToClipboard(text) {
         try {
-            await navigator.clipboard.writeText(prompt.content);
-            UIManager.showToast(`"${prompt.title}" copied to clipboard!`, 'success');
+            navigator.clipboard.writeText(text);
+            UIManager.showToast('Copied to clipboard!', 'success');
         } catch (error) {
-            UIManager.showToast('Error copying prompt', 'error');
+            console.error('Failed to copy:', error);
+            UIManager.showToast('Failed to copy text.', 'error');
         }
     },
 
     /**
      * Send prompt to active tab
-     * @param {string} id ID of prompt to send
+     * @param {Object} prompt Prompt to send
      */
-    async sendPrompt(id) {
-        const prompts = StorageManager.getPrompts();
-        const prompt = prompts.find(p => p.id === id);
-        if (!prompt) return;
+    sendPromptToActiveTab(prompt) {
+        this.sendTextToActiveTab(prompt.content);
+    },
 
-        try {
-            await InjectionManager.injectPrompt(prompt.content);
-            UIManager.showToast(`"${prompt.title}" sent to active tab!`, 'success');
-        } catch (error) {
-            // Error is already handled by InjectionManager
-        }
+    /**
+     * Send text to active tab
+     * @param {string} text Text to send
+     */
+    sendTextToActiveTab(text) {
+        InjectionManager.injectPrompt(text)
+            .then(() => {
+                UIManager.showToast('Prompt sent to active tab!', 'success');
+            })
+            .catch(error => {
+                console.error('Failed to send prompt:', error);
+                UIManager.showToast('Failed to send to active tab.', 'error');
+            });
+    },
+
+    /**
+     * Close a modal
+     * @param {HTMLElement} modal Modal element to close
+     */
+    closeModal(modal) {
+        modal.classList.remove('active');
     }
 }; 
