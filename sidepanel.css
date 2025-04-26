@@ -2,11 +2,12 @@
 .container {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100vh;
     width: 100%;
     min-width: 300px;
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0;
+    overflow: hidden;
 }
 
 /* Header styles */
@@ -65,7 +66,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: transparent;
     color: var(--text-medium);
     border: none;
     cursor: pointer;
@@ -73,7 +74,6 @@
 }
 
 #settingsBtn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
     color: var(--text-light);
     transform: rotate(30deg);
 }
@@ -175,12 +175,29 @@
     flex-direction: column;
     background-color: #1E2736;
     position: relative;
+    min-height: 0;
 }
 
-/* Subtle grid background pattern */
-.tab-contents-container::before {
+/* Tab content styles */
+.tab-content {
+    display: none;
+    overflow-y: auto;
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    background-color: #1E2736;
+    min-height: 0;
+}
+
+.tab-content.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Apply grid background to each tab content */
+.tab-content::before {
     content: '';
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -191,19 +208,6 @@
     background-size: 24px 24px;
     pointer-events: none;
     z-index: 0;
-}
-
-.tab-content {
-    display: none;
-    overflow-y: auto;
-    flex: 1;
-    position: relative;
-    z-index: 1;
-}
-
-.tab-content.active {
-    display: flex;
-    flex-direction: column;
 }
 
 /* Search container styles */
@@ -237,7 +241,7 @@
 
 .search-icon {
     position: absolute;
-    left: 12px;
+    left: 27px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
@@ -247,7 +251,7 @@
 
 .search-sort-container input {
     width: 100%;
-    padding: 10px 10px 10px 36px;
+    padding: 10px 10px 10px 51px;
     border-radius: 8px;
     background-color: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(203, 213, 225, 0.1);
@@ -392,4 +396,56 @@
     color: #9ca3af;
     font-size: 0.95rem;
     line-height: 1.5;
+}
+
+/* Toast notification styles */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(30, 41, 59, 0.9);
+    color: var(--text-light);
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    text-align: center;
+    border-left: 4px solid var(--primary-teal);
+    max-width: 80%;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.toast-success {
+    border-left-color: var(--success-green);
+}
+
+.toast-error {
+    border-left-color: var(--error-red);
+}
+
+.toast-info {
+    border-left-color: var(--primary-teal);
+}
+
+/* Ensure grid background covers entire tab content */
+.prompts-container,
+.community-sections-wrapper,
+.generate-placeholder {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+    min-height: 0;
 }

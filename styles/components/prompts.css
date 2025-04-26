@@ -9,6 +9,7 @@
     width: 100%;
     box-sizing: border-box;
     overflow-y: auto;
+    flex: 1;
 }
 
 /* Prompt Card */
