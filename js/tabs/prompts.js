@@ -12,6 +12,18 @@ const PromptsTab = {
         this.initializeElements();
         this.bindEvents();
         this.loadPrompts();
+        this.setupChangeListeners();
+    },
+
+    /**
+     * Set up event listeners for prompt changes
+     */
+    setupChangeListeners() {
+        // Listen for changes to prompts from any source
+        document.addEventListener('promptsChanged', (event) => {
+            console.log('Detected prompts change event:', event.detail.action);
+            this.loadPrompts();
+        });
     },
 
     /**
@@ -116,7 +128,15 @@ const PromptsTab = {
             return;
         }
 
-        prompts.forEach(prompt => {
+        // Sort prompts by date with most recent first
+        const sortedPrompts = prompts.sort((a, b) => {
+            // Use updatedAt if available, otherwise use createdAt
+            const dateA = a.updatedAt || a.createdAt;
+            const dateB = b.updatedAt || b.createdAt;
+            return new Date(dateB) - new Date(dateA);
+        });
+
+        sortedPrompts.forEach(prompt => {
             this.elements.promptsContainer.appendChild(this.createPromptCard(prompt));
         });
     },
@@ -144,7 +164,15 @@ const PromptsTab = {
             return;
         }
 
-        filteredPrompts.forEach(prompt => {
+        // Sort filtered prompts by date with most recent first
+        const sortedPrompts = filteredPrompts.sort((a, b) => {
+            // Use updatedAt if available, otherwise use createdAt
+            const dateA = a.updatedAt || a.createdAt;
+            const dateB = b.updatedAt || b.createdAt;
+            return new Date(dateB) - new Date(dateA);
+        });
+
+        sortedPrompts.forEach(prompt => {
             this.elements.promptsContainer.appendChild(this.createPromptCard(prompt));
         });
     },
@@ -235,7 +263,7 @@ const PromptsTab = {
     /**
      * Create a new prompt
      */
-    createNewPrompt() {
+    async createNewPrompt() {
         const title = this.elements.newPromptTitle.value.trim();
         const content = this.elements.newPromptTextarea.value.trim();
 
@@ -245,13 +273,17 @@ const PromptsTab = {
         }
 
         const promptData = { title, content, tags: '' };
-        const success = StorageManager.savePrompt(promptData);
+        try {
+            const success = await StorageManager.savePrompt(promptData);
 
-        if (success) {
-            UIManager.showToast('Prompt created successfully!', 'success');
-            this.closeModal(this.elements.newPromptModal);
-            this.loadPrompts();
-        } else {
+            if (success) {
+                UIManager.showToast('Prompt created successfully!', 'success');
+                this.closeModal(this.elements.newPromptModal);
+            } else {
+                UIManager.showToast('There was an error saving the prompt.', 'error');
+            }
+        } catch (error) {
+            console.error('Error creating prompt:', error);
             UIManager.showToast('There was an error saving the prompt.', 'error');
         }
     },
@@ -270,7 +302,7 @@ const PromptsTab = {
     /**
      * Update the current prompt
      */
-    updatePrompt() {
+    async updatePrompt() {
         const id = this.elements.viewEditModal.dataset.id;
         const content = this.elements.viewEditTextarea.value.trim();
         const title = this.elements.viewEditTitle.textContent.trim();
@@ -281,13 +313,17 @@ const PromptsTab = {
         }
 
         const promptData = { content, title };
-        const success = StorageManager.updatePrompt(id, promptData);
+        try {
+            const success = await StorageManager.updatePrompt(id, promptData);
 
-        if (success) {
-            UIManager.showToast('Prompt updated successfully!', 'success');
-            this.closeModal(this.elements.viewEditModal);
-            this.loadPrompts();
-        } else {
+            if (success) {
+                UIManager.showToast('Prompt updated successfully!', 'success');
+                this.closeModal(this.elements.viewEditModal);
+            } else {
+                UIManager.showToast('There was an error updating the prompt.', 'error');
+            }
+        } catch (error) {
+            console.error('Error updating prompt:', error);
             UIManager.showToast('There was an error updating the prompt.', 'error');
         }
     },
@@ -312,17 +348,22 @@ const PromptsTab = {
     /**
      * Delete the prompt with ID from the delete modal
      */
-    deletePrompt() {
+    async deletePrompt() {
         const id = this.elements.deleteModal.dataset.id;
         if (!id) return;
 
-        const success = StorageManager.deletePrompt(id);
-        if (success) {
-            UIManager.showToast('Prompt deleted successfully!', 'success');
-            this.closeModal(this.elements.deleteModal);
-            this.closeModal(this.elements.viewEditModal);
-            this.loadPrompts();
-        } else {
+        try {
+            const success = await StorageManager.deletePrompt(id);
+
+            if (success) {
+                UIManager.showToast('Prompt deleted successfully!', 'success');
+                this.closeModal(this.elements.deleteModal);
+                this.closeModal(this.elements.viewEditModal);
+            } else {
+                UIManager.showToast('There was an error deleting the prompt.', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting prompt:', error);
             UIManager.showToast('There was an error deleting the prompt.', 'error');
         }
     },

@@ -7,6 +7,19 @@ const StorageManager = {
     saveTimeout: null,
 
     /**
+     * Dispatch a custom event when prompts are changed
+     * @param {string} action The action that occurred (save, update, delete)
+     */
+    dispatchPromptChangeEvent(action) {
+        // Create and dispatch a custom event
+        const event = new CustomEvent('promptsChanged', {
+            detail: { action }
+        });
+        document.dispatchEvent(event);
+        console.log(`Dispatched promptsChanged event: ${action}`);
+    },
+
+    /**
      * Get all prompts from storage
      * @returns {Array} Array of prompt objects
      */
@@ -32,7 +45,7 @@ const StorageManager = {
                 clearTimeout(this.saveTimeout);
             }
 
-            // Debounce the save operation
+            // Use a shorter timeout for better responsiveness
             return new Promise((resolve) => {
                 this.saveTimeout = setTimeout(() => {
                     const prompts = this.getPrompts();
@@ -60,8 +73,13 @@ const StorageManager = {
 
                     prompts.push(newPrompt);
                     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(prompts));
+
+                    // Dispatch the change event immediately
+                    this.dispatchPromptChangeEvent('save');
+
+                    console.log('Prompt saved successfully:', newPrompt.title);
                     resolve(true);
-                }, 300); // 300ms debounce
+                }, 50); // Reduced to 50ms for faster response
             });
         } catch (error) {
             console.error('Error saving prompt:', error);
@@ -88,6 +106,10 @@ const StorageManager = {
             };
 
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(prompts));
+
+            // Dispatch the change event
+            this.dispatchPromptChangeEvent('update');
+
             return true;
         } catch (error) {
             console.error('Error updating prompt:', error);
@@ -105,6 +127,10 @@ const StorageManager = {
             const prompts = this.getPrompts();
             const filteredPrompts = prompts.filter(p => p.id !== id);
             localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filteredPrompts));
+
+            // Dispatch the change event
+            this.dispatchPromptChangeEvent('delete');
+
             return true;
         } catch (error) {
             console.error('Error deleting prompt:', error);

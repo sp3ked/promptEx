@@ -319,7 +319,7 @@ const CommunityTab = {
 
             console.log('Attempting to save prompt:', newPrompt);
 
-            // Save using StorageManager
+            // Save using StorageManager - use await to ensure it completes before continuing
             const success = await StorageManager.savePrompt(newPrompt);
 
             if (success) {
@@ -335,18 +335,23 @@ const CommunityTab = {
                 // Show success message
                 UIManager.showToast('Prompt saved to your collection', 'success');
 
-                // Refresh the prompts tab
+                // Force immediate refresh of the prompts tab
                 if (window.PromptsTab && typeof window.PromptsTab.loadPrompts === 'function') {
-                    window.PromptsTab.loadPrompts();
-                }
+                    // Use setTimeout with 0ms to put this at the end of the event queue
+                    // This ensures DOM updates have time to complete
+                    setTimeout(() => {
+                        window.PromptsTab.loadPrompts();
+                        console.log('Forced prompts tab refresh');
 
-                // Switch to prompts tab to show the newly added prompt
-                setTimeout(() => {
-                    const promptsTab = document.querySelector('.tab[data-tab="prompts"]');
-                    if (promptsTab && window.app && typeof window.app.switchTab === 'function') {
-                        window.app.switchTab('prompts');
-                    }
-                }, 300);
+                        // Check if we need to notify the user about the new prompt
+                        const currentTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                        if (currentTab !== 'prompts') {
+                            UIManager.showToast('New prompt saved to My Prompts tab', 'info');
+                        }
+                    }, 0);
+                } else {
+                    console.warn('PromptsTab not available for refresh');
+                }
             } else {
                 UIManager.showToast('Prompt already exists in your collection', 'info');
             }
