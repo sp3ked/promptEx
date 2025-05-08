@@ -54,7 +54,6 @@
             <div class="tab-content active" id="promptsTab">
                 <div class="search-sort-container" id="promptsSearchContainer">
                     <div class="search-input-wrapper">
-                        <i class="fas fa-search search-icon"></i>
                         <input type="text" id="searchInput" placeholder="Search prompts...">
                     </div>
                 </div>
@@ -67,7 +66,6 @@
             <div class="tab-content" id="communityTab">
                 <div class="search-sort-container" id="communitySearchContainer">
                     <div class="search-input-wrapper">
-                        <i class="fas fa-search search-icon"></i>
                         <input type="text" id="communitySearchInput" placeholder="Search community prompts...">
                     </div>
                 </div>
@@ -254,30 +252,62 @@
         </div>
     </div>
 
+    <!-- Expand View Modal -->
+    <div class="modal" id="expandViewModal">
+        <div class="modal-content expand-view-modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="expandViewTitle">Prompt Title</h3>
+                <button class="modal-close" id="closeExpandViewBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body expand-view-content">
+                <div class="expanded-prompt-content" id="expandViewContent"></div>
+            </div>
+            <div class="modal-footer">
+                <div class="action-group-left">
+                    <button class="btn btn-sm btn-tertiary" id="copyExpandBtn">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="sendExpandBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="action-group-right">
+                    <button class="btn btn-secondary" id="closeExpandBtn">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="viewEditModal">
         <div class="modal-content view-edit-modal">
             <div class="modal-header">
                 <h3 id="viewEditTitle">View Prompt</h3>
-                <div class="modal-actions">
-                    <button class="btn btn-icon" id="closeViewEditBtn" title="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+                <button class="btn-icon" id="closeViewEditBtn" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <textarea class="prompt-textarea" id="viewEditTextarea"></textarea>
             <div class="modal-actions">
-                <button class="btn btn-delete" id="deleteFromViewBtn" title="Delete">
-                    <i class="fas fa-trash"></i>
-                </button>
-                <button class="btn btn-tertiary" id="copyFromViewBtn" title="Copy">
-                    <i class="fas fa-copy"></i>
-                </button>
-                <button class="btn btn-primary" id="sendFromViewBtn" title="Send">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-                <button class="btn btn-secondary" id="saveFromViewBtn">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
+                <div class="action-group-left">
+                    <button class="btn btn-sm btn-delete" id="deleteFromViewBtn" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="btn btn-sm btn-tertiary" id="copyFromViewBtn" title="Copy">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="sendFromViewBtn" title="Send">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="action-group-right">
+                    <button class="btn btn-secondary" id="saveFromViewBtn">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -286,11 +316,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Create New Prompt</h3>
-                <div class="modal-actions">
-                    <button class="btn btn-icon" id="closeNewPromptBtn" title="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+                <button class="btn-icon" id="closeNewPromptBtn" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="input-group">
                 <label for="newPromptTitle">Title</label>
@@ -303,12 +331,16 @@
                     placeholder="Enter your prompt here..."></textarea>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-tertiary" id="cancelNewPromptBtn">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-                <button class="btn btn-primary" id="createNewPromptBtn">
-                    <i class="fas fa-plus"></i> Create
-                </button>
+                <div class="action-group-left">
+                    <button class="btn btn-sm btn-tertiary" id="cancelNewPromptBtn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="action-group-right">
+                    <button class="btn btn-secondary" id="createNewPromptBtn">
+                        <i class="fas fa-plus"></i> Create
+                    </button>
+                </div>
             </div>
         </div>
     </div>

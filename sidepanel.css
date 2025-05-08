@@ -32,11 +32,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: calc(100% - 140px);
 }
 
 .header-actions {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     flex-shrink: 0;
     align-items: center;
 }
@@ -203,8 +204,8 @@
     right: 0;
     bottom: 0;
     background-image:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(0, 0, 0, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.15) 1px, transparent 1px);
     background-size: 24px 24px;
     pointer-events: none;
     z-index: 0;
@@ -232,43 +233,28 @@
     transition: width 0.3s ease;
 }
 
-@media (max-width: 450px) {
-    .search-input-wrapper {
-        width: 100%;
-        max-width: 100%;
-    }
-}
-
+/* Remove search icon styles */
 .search-icon {
-    position: absolute;
-    left: 27px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 14px;
-    transition: all 0.2s ease;
+    display: none;
 }
 
+/* Search input without icon */
 .search-sort-container input {
     width: 100%;
-    padding: 10px 10px 10px 51px;
-    border-radius: 8px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(203, 213, 225, 0.1);
-    color: var(--text-light);
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+    padding: 10px 16px;
     font-size: 14px;
+    color: var(--text-light);
     transition: all 0.2s ease;
 }
 
 .search-sort-container input:focus {
     outline: none;
     border-color: var(--primary-teal);
-    background-color: rgba(0, 0, 0, 0.3);
-    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-}
-
-.search-sort-container input:focus+.search-icon {
-    color: var(--primary-teal);
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
 .search-sort-container input::placeholder {
@@ -310,9 +296,16 @@
         width: 100%;
         max-width: 100%;
     }
+}
+
+@media (max-width: 450px) {
+    .header {
+        padding: 12px;
+    }
 
     .title {
         font-size: 20px;
+        max-width: calc(100% - 120px);
     }
 
     #newPromptBtn {
@@ -320,10 +313,37 @@
         font-size: 13px;
     }
 
+    #settingsBtn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .search-input-wrapper {
+        width: 100%;
+        max-width: 100%;
+    }
+
     .tab {
         min-width: 70px;
         padding: 0 12px;
         font-size: 14px;
+    }
+}
+
+@media (max-width: 400px) {
+
+    .title-buttons,
+    .community-title-buttons {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    .title-buttons .btn-icon,
+    .community-title-buttons .btn-icon {
+        width: 32px;
+        height: 32px;
     }
 }
 
@@ -351,21 +371,6 @@
 .prompt-title,
 .community-prompt-title {
     flex-wrap: wrap;
-}
-
-@media (max-width: 400px) {
-
-    .title-buttons,
-    .community-title-buttons {
-        margin-top: 8px;
-        width: 100%;
-        justify-content: flex-end;
-    }
-
-    .prompt-title-text,
-    .community-prompt-title-text {
-        width: 100%;
-    }
 }
 
 /* Genetrew Tab Styles */

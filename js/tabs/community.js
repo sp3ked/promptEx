@@ -276,49 +276,51 @@ class CommunityTab {
         this.elements.communitySectionsWrapper.appendChild(sectionElement);
     }
 
+    /**
+     * Create a prompt card element
+     * @param {Object} prompt Prompt data
+     * @returns {HTMLElement} Prompt card element
+     */
     createPromptCard(prompt) {
         const card = document.createElement('div');
-        card.className = 'community-prompt-card';
-        card.dataset.promptId = prompt.id;
-        card.dataset.category = prompt.category;
+        card.className = 'prompt-card';
+        card.dataset.id = prompt.id || `community-${Date.now()}`;
 
-        // Sanitize content
-        const sanitizeHTML = (str) => {
-            const temp = document.createElement('div');
-            temp.textContent = str;
-            return temp.innerHTML;
-        };
-
-        const isStarred = this.starredPrompts.has(prompt.id);
+        // Sanitize HTML content
+        const sanitizedTitle = UIManager.sanitizeHtml(prompt.title);
+        const sanitizedContent = UIManager.sanitizeHtml(prompt.content);
+        const sanitizedAuthor = UIManager.sanitizeHtml(prompt.author || 'Community User');
 
         card.innerHTML = `
-            <div class="community-prompt-title">
-                <div class="community-prompt-title-text">${sanitizeHTML(prompt.title)}</div>
-                <div class="community-title-buttons">
-                    <button class="btn-icon btn-star ${isStarred ? 'active' : ''}" title="${isStarred ? 'Unstar' : 'Star'} this prompt">
-                        <i class="fas fa-star"></i>
-                    </button>
-                    <button class="btn-icon btn-import" title="Import this prompt">
-                        <i class="fas fa-download"></i>
-                    </button>
-                    <button class="btn-icon btn-view" title="View prompt details">
-                        <i class="fas fa-eye"></i>
-                    </button>
+            <h3 class="prompt-title">
+                <span class="prompt-title-text">${sanitizedTitle}</span>
+                <div class="title-buttons">
+                    <button class="btn-icon btn-expand" title="Expand to full view"><i class="fas fa-expand-alt"></i></button>
+                    <button class="btn-icon btn-copy" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
+                    <button class="btn-icon btn-send send" title="Send to active tab"><i class="fas fa-paper-plane"></i></button>
                 </div>
-            </div>
-            <div class="community-prompt-content">${sanitizeHTML(prompt.content)}</div>
-            <div class="community-prompt-meta">
-                <div class="community-prompt-stats">
-                    <span class="stat star-count ${isStarred ? 'active' : ''}">
-                        <i class="fas fa-star"></i> ${prompt.stars}
-                    </span>
-                    <span class="stat">
-                        <i class="fas fa-bolt"></i> ${prompt.usageCount}
-                    </span>
-                </div>
-                <div class="category-badge ${prompt.category}">${prompt.category.charAt(0).toUpperCase() + prompt.category.slice(1)}</div>
+            </h3>
+            <p class="prompt-content">${sanitizedContent}</p>
+            <div class="prompt-meta">
+                <span>By: ${sanitizedAuthor}</span>
             </div>
         `;
+
+        // Add event listeners to the card buttons
+        card.querySelector('.btn-copy').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.copyPromptToClipboard(prompt);
+        });
+
+        card.querySelector('.btn-send').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.sendPromptToActiveTab(prompt);
+        });
+
+        card.querySelector('.btn-expand').addEventListener('click', (e) => {
+            e.stopPropagation();
+            PromptsTab.showExpandView(prompt);
+        });
 
         return card;
     }
@@ -472,8 +474,8 @@ class CommunityTab {
     /**
      * Copy prompt content to clipboard
      */
-    copyPromptToClipboard() {
-        const content = this.elements.viewCommunityPromptContent.textContent;
+    copyPromptToClipboard(prompt) {
+        const content = prompt.content;
         if (!content) return;
 
         navigator.clipboard.writeText(content)
@@ -484,8 +486,8 @@ class CommunityTab {
     /**
      * Send prompt to active tab
      */
-    sendPromptToActiveTab() {
-        const content = this.elements.viewCommunityPromptContent.textContent;
+    sendPromptToActiveTab(prompt) {
+        const content = prompt.content;
         if (!content) return;
 
         // Use chrome.tabs API to send content to active tab
@@ -578,6 +580,60 @@ class CommunityTab {
             console.log(`Toast: ${message} (${type})`);
         }
     }
+
+    /**
+     * Copy text to clipboard
+     * @param {string} text Text to copy
+     */
+    copyTextToClipboard(text) {
+        if (!text) return;
+
+        // Create a temporary textarea
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+            // Execute copy command
+            document.execCommand('copy');
+            UIManager.showToast('Copied to clipboard!', 'success');
+        } catch (err) {
+            UIManager.showToast('Failed to copy text', 'error');
+            console.error('Failed to copy text: ', err);
+        }
+
+        // Cleanup
+        document.body.removeChild(textarea);
+    },
+
+    /**
+     * Send text to active tab
+     * @param {string} text Text to send
+     */
+    sendTextToActiveTab(text) {
+        if (!text) return;
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs && tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'sendPrompt',
+                    prompt: text
+                }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        UIManager.showToast('Could not send to tab. Try refreshing the page.', 'error');
+                    } else if (response && response.success) {
+                        UIManager.showToast('Prompt sent to active tab!', 'success');
+                    } else {
+                        UIManager.showToast('Failed to send prompt', 'error');
+                    }
+                });
+            } else {
+                UIManager.showToast('No active tab found', 'error');
+            }
+        });
+    },
 }
 
 export default CommunityTab; 

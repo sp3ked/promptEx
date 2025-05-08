@@ -37,7 +37,15 @@ const PromptsTab = {
             sendFromViewBtn: document.getElementById('sendFromViewBtn'),
             deleteModal: document.getElementById('deleteModal'),
             confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
-            cancelDeleteBtn: document.getElementById('cancelDeleteBtn')
+            cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
+            // New expand view elements
+            expandViewModal: document.getElementById('expandViewModal'),
+            expandViewTitle: document.getElementById('expandViewTitle'),
+            expandViewContent: document.getElementById('expandViewContent'),
+            closeExpandViewBtn: document.getElementById('closeExpandViewBtn'),
+            closeExpandBtn: document.getElementById('closeExpandBtn'),
+            copyExpandBtn: document.getElementById('copyExpandBtn'),
+            sendExpandBtn: document.getElementById('sendExpandBtn')
         };
     },
 
@@ -67,6 +75,12 @@ const PromptsTab = {
         this.elements.confirmDeleteBtn.addEventListener('click', () => this.deletePrompt());
         this.elements.cancelDeleteBtn.addEventListener('click', () => this.closeModal(this.elements.deleteModal));
 
+        // Expand view modal
+        this.elements.closeExpandViewBtn.addEventListener('click', () => this.closeModal(this.elements.expandViewModal));
+        this.elements.closeExpandBtn.addEventListener('click', () => this.closeModal(this.elements.expandViewModal));
+        this.elements.copyExpandBtn.addEventListener('click', () => this.copyExpandedPromptToClipboard());
+        this.elements.sendExpandBtn.addEventListener('click', () => this.sendExpandedPromptToActiveTab());
+
         // Close modals when clicking outside
         window.addEventListener('click', (e) => {
             if (e.target === this.elements.newPromptModal) {
@@ -77,6 +91,9 @@ const PromptsTab = {
             }
             if (e.target === this.elements.deleteModal) {
                 this.closeModal(this.elements.deleteModal);
+            }
+            if (e.target === this.elements.expandViewModal) {
+                this.closeModal(this.elements.expandViewModal);
             }
         });
     },
@@ -165,6 +182,7 @@ const PromptsTab = {
             <h3 class="prompt-title">
                 <span class="prompt-title-text">${sanitizedTitle}</span>
                 <div class="title-buttons">
+                    <button class="btn-icon btn-expand" title="Expand to full view"><i class="fas fa-expand-alt"></i></button>
                     <button class="btn-icon btn-copy" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
                     <button class="btn-icon btn-send send" title="Send to active tab"><i class="fas fa-paper-plane"></i></button>
                     <button class="btn-icon delete" title="Delete prompt"><i class="fas fa-trash"></i></button>
@@ -190,6 +208,11 @@ const PromptsTab = {
         card.querySelector('.delete').addEventListener('click', (e) => {
             e.stopPropagation();
             this.showDeleteConfirmationForPrompt(prompt.id);
+        });
+
+        card.querySelector('.btn-expand').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showExpandView(prompt);
         });
 
         // Make the whole card clickable to view/edit the prompt
@@ -363,6 +386,35 @@ const PromptsTab = {
                 console.error('Failed to send prompt:', error);
                 UIManager.showToast('Failed to send to active tab.', 'error');
             });
+    },
+
+    /**
+     * Show the expanded view modal for a prompt
+     * @param {Object} prompt Prompt to expand
+     */
+    showExpandView(prompt) {
+        this.elements.expandViewTitle.textContent = prompt.title;
+        this.elements.expandViewContent.textContent = prompt.content;
+        this.elements.expandViewModal.dataset.id = prompt.id;
+        this.elements.expandViewModal.classList.add('active');
+    },
+
+    /**
+     * Copy the expanded prompt content to clipboard
+     */
+    copyExpandedPromptToClipboard() {
+        const content = this.elements.expandViewContent.textContent;
+        this.copyTextToClipboard(content);
+        UIManager.showToast('Prompt copied to clipboard!', 'success');
+    },
+
+    /**
+     * Send the expanded prompt content to the active tab
+     */
+    sendExpandedPromptToActiveTab() {
+        const content = this.elements.expandViewContent.textContent;
+        this.sendTextToActiveTab(content);
+        UIManager.showToast('Prompt sent to active tab!', 'success');
     },
 
     /**
