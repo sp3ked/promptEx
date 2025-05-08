@@ -2,13 +2,8 @@
  * Generate Tab Module
  * Handles the prompt generator tab functionality
  */
-class GenerateTab {
-    /**
-     * Constructor for the Generate tab
-     */
-    constructor() {
-        this.elements = {};
-    }
+const GenerateTab = {
+    elements: {},
 
     /**
      * Initialize the Generate tab
@@ -17,7 +12,7 @@ class GenerateTab {
         this.initializeElements();
         this.bindEvents();
         console.log('Generate tab initialized');
-    }
+    },
 
     /**
      * Initialize DOM elements
@@ -27,14 +22,14 @@ class GenerateTab {
             tabContent: document.querySelector('#generateTab'),
             placeholder: document.querySelector('.generate-placeholder')
         };
-    }
+    },
 
     /**
      * Bind event listeners
      */
     bindEvents() {
         // Future event bindings will go here
-    }
+    },
 
     /**
      * Show a toast notification
@@ -48,6 +43,4 @@ class GenerateTab {
             console.log(`Toast: ${message} (${type})`);
         }
     }
-}
-
-export default GenerateTab; 
+}; 

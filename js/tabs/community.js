@@ -2,17 +2,11 @@
  * Community tab module for handling community prompt-related functionality
  */
 
-class CommunityTab {
-    constructor() {
-        this.elements = {};
-        this.currentFilters = {
-            category: 'all',
-            search: '',
-            sort: 'popular'
-        };
-        this.communityPrompts = [];
-        this.starredPrompts = new Set();
-    }
+const CommunityTab = {
+    elements: {},
+    communityPrompts: [],
+    filteredPrompts: [],
+    currentFilter: 'all',
 
     /**
      * Initialize community tab
@@ -21,7 +15,7 @@ class CommunityTab {
         this.initializeElements();
         this.bindEvents();
         this.loadCommunityPrompts();
-    }
+    },
 
     /**
      * Initialize DOM elements
@@ -29,37 +23,21 @@ class CommunityTab {
     initializeElements() {
         this.elements = {
             // Main containers
-            communitySectionsWrapper: document.querySelector('.community-sections-wrapper'),
-            searchInput: document.querySelector('#communitySearchInput'),
-            sortSelect: document.querySelector('#communitySortSelect'),
-            categoryFilter: document.querySelector('#communityCategoryFilter'),
+            communityPromptContainer: document.getElementById('communityPromptContainer'),
+            searchInput: document.getElementById('communitySearchInput'),
+            filterSelect: document.getElementById('communityFilter'),
 
-            // Section containers - will be populated dynamically
-            featuredSection: null,
-            popularSection: null,
-            recentSection: null,
-
-            // Old modal elements (for backwards compatibility)
-            viewPromptModal: document.querySelector('#viewPromptModal'),
-            viewPromptTitle: document.querySelector('#viewPromptTitle'),
-            viewPromptContent: document.querySelector('#viewPromptContent'),
-            viewPromptCategory: document.querySelector('#viewPromptCategory'),
-            viewPromptTags: document.querySelector('#viewPromptTags'),
-            viewPromptStats: document.querySelector('#viewPromptStats'),
-            viewPromptClose: document.querySelector('#viewPromptClose'),
-            viewPromptImport: document.querySelector('#viewPromptImport'),
-
-            // View Community Prompt Modal elements
-            viewCommunityPromptModal: document.querySelector('#viewCommunityPromptModal'),
-            viewCommunityPromptTitle: document.querySelector('#viewCommunityPromptTitle'),
-            viewCommunityPromptContent: document.querySelector('#viewCommunityPromptContent'),
-            viewCommunityPromptAuthor: document.querySelector('#viewCommunityPromptAuthor'),
-            closeViewCommunityPromptBtn: document.querySelector('#closeViewCommunityPromptBtn'),
-            saveToMyPromptsBtn: document.querySelector('#saveToMyPromptsBtn'),
-            copyFromViewPromptBtn: document.querySelector('#copyFromViewPromptBtn'),
-            sendFromViewPromptBtn: document.querySelector('#sendFromViewPromptBtn')
+            // Community Prompt Modal elements
+            viewCommunityPromptModal: document.getElementById('viewCommunityPromptModal'),
+            viewCommunityPromptTitle: document.getElementById('viewCommunityPromptTitle'),
+            viewCommunityPromptContent: document.getElementById('viewCommunityPromptContent'),
+            viewCommunityPromptAuthor: document.getElementById('viewCommunityPromptAuthor'),
+            closeViewCommunityPromptBtn: document.getElementById('closeViewCommunityPromptBtn'),
+            saveToMyPromptsBtn: document.getElementById('saveToMyPromptsBtn'),
+            copyFromViewPromptBtn: document.getElementById('copyFromViewPromptBtn'),
+            sendFromViewPromptBtn: document.getElementById('sendFromViewPromptBtn')
         };
-    }
+    },
 
     /**
      * Bind event listeners
@@ -67,54 +45,14 @@ class CommunityTab {
     bindEvents() {
         // Search and filter events
         this.elements.searchInput.addEventListener('input', () => this.filterPrompts());
-        this.elements.sortSelect.addEventListener('change', () => this.sortPrompts());
-        this.elements.categoryFilter.addEventListener('change', () => this.filterByCategory());
-
-        // Legacy Modal events (for backward compatibility)
-        if (this.elements.viewPromptClose) {
-            this.elements.viewPromptClose.addEventListener('click', () => this.closeViewModal());
-        }
-        if (this.elements.viewPromptImport) {
-            this.elements.viewPromptImport.addEventListener('click', () => this.importPrompt());
-        }
+        this.elements.filterSelect.addEventListener('change', () => this.filterPrompts());
 
         // Community Prompt Modal events
         this.elements.closeViewCommunityPromptBtn.addEventListener('click', () => this.closeViewCommunityModal());
         this.elements.saveToMyPromptsBtn.addEventListener('click', () => this.saveToMyPrompts());
         this.elements.copyFromViewPromptBtn.addEventListener('click', () => this.copyPromptToClipboard());
         this.elements.sendFromViewPromptBtn.addEventListener('click', () => this.sendPromptToActiveTab());
-
-        // Event delegation for community sections
-        this.elements.communitySectionsWrapper.addEventListener('click', (e) => {
-            const promptCard = e.target.closest('.community-prompt-card');
-            if (!promptCard) return;
-
-            // Handle star button
-            if (e.target.closest('.btn-star')) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.toggleStar(promptCard.dataset.promptId);
-                return;
-            }
-
-            // Handle import button
-            if (e.target.closest('.btn-import')) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.importPrompt(promptCard.dataset.promptId);
-                return;
-            }
-
-            // Handle view button or title/content click
-            if (e.target.closest('.btn-view') ||
-                e.target.closest('.community-prompt-title-text') ||
-                e.target.closest('.community-prompt-content')) {
-                e.preventDefault();
-                e.stopPropagation();
-                this.openViewCommunityModal(promptCard.dataset.promptId);
-            }
-        });
-    }
+    },
 
     /**
      * Load community prompts
@@ -134,8 +72,7 @@ class CommunityTab {
                     author: 'DevMaster',
                     stars: 245,
                     usageCount: 1892,
-                    createdAt: '2023-05-15',
-                    featured: true
+                    createdAt: '2023-05-15'
                 },
                 {
                     id: 'cp2',
@@ -146,8 +83,7 @@ class CommunityTab {
                     author: 'ContentCreator',
                     stars: 189,
                     usageCount: 1245,
-                    createdAt: '2023-06-02',
-                    featured: false
+                    createdAt: '2023-06-02'
                 },
                 {
                     id: 'cp3',
@@ -158,8 +94,7 @@ class CommunityTab {
                     author: 'FrontEndPro',
                     stars: 321,
                     usageCount: 2451,
-                    createdAt: '2023-04-22',
-                    featured: true
+                    createdAt: '2023-04-22'
                 },
                 {
                     id: 'cp4',
@@ -170,8 +105,7 @@ class CommunityTab {
                     author: 'MarketingGuru',
                     stars: 156,
                     usageCount: 987,
-                    createdAt: '2023-07-08',
-                    featured: false
+                    createdAt: '2023-07-08'
                 },
                 {
                     id: 'cp5',
@@ -182,8 +116,7 @@ class CommunityTab {
                     author: 'EfficiencyExpert',
                     stars: 278,
                     usageCount: 1632,
-                    createdAt: '2023-05-30',
-                    featured: true
+                    createdAt: '2023-05-30'
                 },
                 {
                     id: 'cp6',
@@ -194,87 +127,71 @@ class CommunityTab {
                     author: 'StoryTeller',
                     stars: 203,
                     usageCount: 1478,
-                    createdAt: '2023-06-15',
-                    featured: false
+                    createdAt: '2023-06-15'
                 }
             ];
 
-            // Load user's starred prompts from localStorage
-            const storedStars = localStorage.getItem('starredCommunityPrompts');
-            if (storedStars) {
-                this.starredPrompts = new Set(JSON.parse(storedStars));
-            }
+            // Initialize filtered prompts
+            this.filteredPrompts = [...this.communityPrompts];
 
-            // Render community sections
-            this.renderCommunitySections();
+            // Render community prompts
+            this.renderPrompts();
         } catch (error) {
             console.error('Error loading community prompts:', error);
-            this.showToast('Failed to load community prompts', 'error');
+            UIManager.showToast('Failed to load community prompts', 'error');
         }
-    }
+    },
 
-    renderCommunitySections() {
+    /**
+     * Render community prompts in the container
+     */
+    renderPrompts() {
         // Clear existing content
-        this.elements.communitySectionsWrapper.innerHTML = '';
+        this.elements.communityPromptContainer.innerHTML = '';
 
-        // Create featured section
-        const featuredPrompts = this.communityPrompts.filter(p => p.featured);
-        this.renderSection('Featured Prompts', 'Curated prompts selected by our team', featuredPrompts);
-
-        // Create popular section - sort by stars
-        const popularPrompts = [...this.communityPrompts].sort((a, b) => b.stars - a.stars).slice(0, 5);
-        this.renderSection('Popular Prompts', 'Most starred prompts from our community', popularPrompts);
-
-        // Create recent section - sort by date
-        const recentPrompts = [...this.communityPrompts].sort((a, b) =>
-            new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-        this.renderSection('Recent Prompts', 'Newly added prompts to explore', recentPrompts);
-    }
-
-    renderSection(title, description, prompts) {
-        const sectionElement = document.createElement('div');
-        sectionElement.className = 'community-section';
-
-        // Create section header
-        const headerElement = document.createElement('div');
-        headerElement.className = 'section-header';
-
-        const titleElement = document.createElement('div');
-        titleElement.className = 'section-title';
-        titleElement.textContent = title;
-
-        headerElement.appendChild(titleElement);
-        sectionElement.appendChild(headerElement);
-
-        // Add section description
-        if (description) {
-            const descriptionElement = document.createElement('div');
-            descriptionElement.className = 'section-description';
-            descriptionElement.textContent = description;
-            sectionElement.appendChild(descriptionElement);
-        }
-
-        // Create prompts container
-        const promptsContainer = document.createElement('div');
-        promptsContainer.className = 'community-prompts-container';
-
-        // Add prompts or placeholder
-        if (prompts.length === 0) {
-            promptsContainer.innerHTML = `
-                <div class="community-placeholder">
-                    <i class="fas fa-search" style="font-size: 24px; margin-bottom: 16px;"></i>
-                    <p>No prompts found in this section</p>
+        if (this.filteredPrompts.length === 0) {
+            this.elements.communityPromptContainer.innerHTML = `
+                <div class="placeholder">
+                    <p><i class="fas fa-search"></i> No prompts match your search</p>
+                    <p class="placeholder-subtitle">Try different search terms or filters</p>
                 </div>
             `;
-        } else {
-            prompts.forEach(prompt => {
-                promptsContainer.appendChild(this.createPromptCard(prompt));
-            });
+            return;
         }
 
-        sectionElement.appendChild(promptsContainer);
-        this.elements.communitySectionsWrapper.appendChild(sectionElement);
-    }
+        // Create and append prompt cards
+        this.filteredPrompts.forEach(prompt => {
+            const card = this.createPromptCard(prompt);
+            this.elements.communityPromptContainer.appendChild(card);
+        });
+    },
+
+    /**
+     * Filter prompts based on search input and category filter
+     */
+    filterPrompts() {
+        const searchTerm = this.elements.searchInput.value.toLowerCase().trim();
+        this.currentFilter = this.elements.filterSelect.value;
+
+        this.filteredPrompts = this.communityPrompts.filter(prompt => {
+            // Apply category filter
+            const categoryMatch = this.currentFilter === 'all' || prompt.category === this.currentFilter;
+
+            // Apply search filter if there's a search term
+            let searchMatch = true;
+            if (searchTerm) {
+                searchMatch =
+                    prompt.title.toLowerCase().includes(searchTerm) ||
+                    prompt.content.toLowerCase().includes(searchTerm) ||
+                    prompt.author.toLowerCase().includes(searchTerm) ||
+                    (prompt.tags && prompt.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+            }
+
+            return categoryMatch && searchMatch;
+        });
+
+        this.renderPrompts();
+    },
 
     /**
      * Create a prompt card element
@@ -284,7 +201,7 @@ class CommunityTab {
     createPromptCard(prompt) {
         const card = document.createElement('div');
         card.className = 'prompt-card';
-        card.dataset.id = prompt.id || `community-${Date.now()}`;
+        card.dataset.id = prompt.id;
 
         // Sanitize HTML content
         const sanitizedTitle = UIManager.sanitizeHtml(prompt.title);
@@ -300,7 +217,9 @@ class CommunityTab {
                     <button class="btn-icon btn-send send" title="Send to active tab"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </h3>
-            <p class="prompt-content">${sanitizedContent}</p>
+            <div class="prompt-preview">
+                <div class="prompt-content">${sanitizedContent}</div>
+            </div>
             <div class="prompt-meta">
                 <span>By: ${sanitizedAuthor}</span>
             </div>
@@ -319,120 +238,16 @@ class CommunityTab {
 
         card.querySelector('.btn-expand').addEventListener('click', (e) => {
             e.stopPropagation();
-            PromptsTab.showExpandView(prompt);
+            this.openViewCommunityModal(prompt.id);
+        });
+
+        // Make the whole card clickable
+        card.addEventListener('click', () => {
+            this.openViewCommunityModal(prompt.id);
         });
 
         return card;
-    }
-
-    filterPrompts() {
-        this.currentFilters.search = this.elements.searchInput.value.toLowerCase();
-        this.applyFilters();
-    }
-
-    sortPrompts() {
-        this.currentFilters.sort = this.elements.sortSelect.value;
-        this.applyFilters();
-    }
-
-    filterByCategory() {
-        this.currentFilters.category = this.elements.categoryFilter.value;
-        this.applyFilters();
-    }
-
-    applyFilters() {
-        // This would typically involve re-fetching data with filters applied
-        // For demo purposes, we're just re-rendering with the same data
-        this.renderCommunitySections();
-
-        const searchTerms = this.currentFilters.search.split(' ').filter(term => term.length > 0);
-
-        // Hide cards that don't match filters
-        const promptCards = document.querySelectorAll('.community-prompt-card');
-        promptCards.forEach(card => {
-            const prompt = this.communityPrompts.find(p => p.id === card.dataset.promptId);
-            if (!prompt) return;
-
-            // Apply category filter
-            const categoryMatch = this.currentFilters.category === 'all' ||
-                prompt.category === this.currentFilters.category;
-
-            // Apply search filter
-            let searchMatch = true;
-            if (searchTerms.length > 0) {
-                searchMatch = searchTerms.every(term =>
-                    prompt.title.toLowerCase().includes(term) ||
-                    prompt.content.toLowerCase().includes(term) ||
-                    prompt.tags.some(tag => tag.toLowerCase().includes(term)));
-            }
-
-            card.style.display = categoryMatch && searchMatch ? 'block' : 'none';
-        });
-
-        // Show placeholder for empty sections
-        document.querySelectorAll('.community-section').forEach(section => {
-            const visibleCards = section.querySelectorAll('.community-prompt-card[style="display: block"]');
-            let placeholder = section.querySelector('.community-placeholder');
-
-            if (visibleCards.length === 0) {
-                if (!placeholder) {
-                    placeholder = document.createElement('div');
-                    placeholder.className = 'community-placeholder';
-                    placeholder.innerHTML = `
-                        <i class="fas fa-filter" style="font-size: 24px; margin-bottom: 16px;"></i>
-                        <p>No prompts match your filters</p>
-                    `;
-                    section.querySelector('.community-prompts-container').appendChild(placeholder);
-                }
-            } else if (placeholder) {
-                placeholder.remove();
-            }
-        });
-    }
-
-    toggleStar(promptId) {
-        const isCurrentlyStarred = this.starredPrompts.has(promptId);
-        const promptCards = document.querySelectorAll(`.community-prompt-card[data-prompt-id="${promptId}"]`);
-
-        if (isCurrentlyStarred) {
-            this.starredPrompts.delete(promptId);
-            promptCards.forEach(card => {
-                card.querySelector('.btn-star').classList.remove('active');
-                card.querySelector('.star-count').classList.remove('active');
-            });
-
-            // Update prompt object
-            const promptIndex = this.communityPrompts.findIndex(p => p.id === promptId);
-            if (promptIndex !== -1) {
-                this.communityPrompts[promptIndex].stars--;
-                promptCards.forEach(card => {
-                    card.querySelector('.star-count').textContent = ` ${this.communityPrompts[promptIndex].stars}`;
-                });
-            }
-
-            this.showToast('Removed from your starred prompts', 'info');
-        } else {
-            this.starredPrompts.add(promptId);
-            promptCards.forEach(card => {
-                card.querySelector('.btn-star').classList.add('active');
-                card.querySelector('.star-count').classList.add('active');
-            });
-
-            // Update prompt object
-            const promptIndex = this.communityPrompts.findIndex(p => p.id === promptId);
-            if (promptIndex !== -1) {
-                this.communityPrompts[promptIndex].stars++;
-                promptCards.forEach(card => {
-                    card.querySelector('.star-count').textContent = ` ${this.communityPrompts[promptIndex].stars}`;
-                });
-            }
-
-            this.showToast('Added to your starred prompts', 'success');
-        }
-
-        // Save to localStorage
-        localStorage.setItem('starredCommunityPrompts', JSON.stringify([...this.starredPrompts]));
-    }
+    },
 
     /**
      * Open the community prompt view modal
@@ -448,138 +263,114 @@ class CommunityTab {
         // Populate modal content
         this.elements.viewCommunityPromptTitle.textContent = prompt.title;
         this.elements.viewCommunityPromptContent.textContent = prompt.content;
-        this.elements.viewCommunityPromptAuthor.textContent = `Created by: ${prompt.author}`;
+        this.elements.viewCommunityPromptAuthor.textContent = `Created by: ${prompt.author || 'Community User'}`;
+
+        // Make content editable
+        this.elements.viewCommunityPromptContent.contentEditable = true;
+        this.elements.viewCommunityPromptContent.style.cursor = 'text';
+        this.elements.viewCommunityPromptContent.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
 
         // Show modal
-        this.elements.viewCommunityPromptModal.classList.add('show');
-    }
+        this.elements.viewCommunityPromptModal.classList.add('active');
+    },
 
     /**
      * Close the community prompt view modal
      */
     closeViewCommunityModal() {
-        this.elements.viewCommunityPromptModal.classList.remove('show');
-    }
+        this.elements.viewCommunityPromptModal.classList.remove('active');
+    },
 
     /**
      * Save the viewed prompt to my prompts collection
      */
-    saveToMyPrompts() {
-        const promptId = this.elements.saveToMyPromptsBtn.dataset.promptId;
-        if (!promptId) return;
-
-        this.importPrompt(promptId);
-    }
-
-    /**
-     * Copy prompt content to clipboard
-     */
-    copyPromptToClipboard(prompt) {
-        const content = prompt.content;
-        if (!content) return;
-
-        navigator.clipboard.writeText(content)
-            .then(() => this.showToast('Prompt copied to clipboard', 'success'))
-            .catch(() => this.showToast('Failed to copy prompt', 'error'));
-    }
-
-    /**
-     * Send prompt to active tab
-     */
-    sendPromptToActiveTab(prompt) {
-        const content = prompt.content;
-        if (!content) return;
-
-        // Use chrome.tabs API to send content to active tab
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs && tabs[0] && tabs[0].id) {
-                chrome.tabs.sendMessage(tabs[0].id, { action: 'insertPrompt', prompt: content })
-                    .then(() => this.showToast('Prompt sent to active tab', 'success'))
-                    .catch(() => this.showToast('Failed to send prompt to active tab', 'error'));
-            } else {
-                this.showToast('No active tab found', 'error');
-            }
-        });
-    }
-
-    openViewModal(promptId) {
-        // Use the new community modal instead
-        this.openViewCommunityModal(promptId);
-    }
-
-    closeViewModal() {
-        // If the old modal exists, close it
-        if (this.elements.viewPromptModal) {
-            this.elements.viewPromptModal.classList.remove('show');
-        }
-        // Also close the new modal
-        this.closeViewCommunityModal();
-    }
-
-    importPrompt(promptId) {
-        // If called from view modal, get ID from button
-        if (!promptId) {
-            // Try to get from the community modal first
-            if (this.elements.saveToMyPromptsBtn && this.elements.saveToMyPromptsBtn.dataset.promptId) {
-                promptId = this.elements.saveToMyPromptsBtn.dataset.promptId;
-            }
-            // Fall back to the old modal if needed
-            else if (this.elements.viewPromptImport && this.elements.viewPromptImport.dataset.promptId) {
-                promptId = this.elements.viewPromptImport.dataset.promptId;
-            }
-        }
-
-        const prompt = this.communityPrompts.find(p => p.id === promptId);
-        if (!prompt) return;
-
-        // Create a new prompt object for the user's collection
-        const newPrompt = {
-            id: `imported-${Date.now()}`,
-            title: `${prompt.title} (imported)`,
-            content: prompt.content,
-            folder: 'Imported',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        // Get existing prompts
-        let userPrompts = [];
+    async saveToMyPrompts() {
         try {
-            const stored = localStorage.getItem('prompts');
-            if (stored) {
-                userPrompts = JSON.parse(stored);
+            const promptId = this.elements.saveToMyPromptsBtn.dataset.promptId;
+            if (!promptId) {
+                console.error('No prompt ID found');
+                return;
+            }
+
+            // Get the original prompt
+            const originalPrompt = this.communityPrompts.find(p => p.id === promptId);
+            if (!originalPrompt) {
+                console.error('Original prompt not found');
+                return;
+            }
+
+            // Get the potentially edited content
+            const editedContent = this.elements.viewCommunityPromptContent.textContent.trim();
+            if (!editedContent) {
+                UIManager.showToast('Prompt content cannot be empty', 'error');
+                return;
+            }
+
+            // Create a new prompt object for the user's collection
+            const newPrompt = {
+                title: editedContent === originalPrompt.content
+                    ? `${originalPrompt.title} (imported)`
+                    : `${originalPrompt.title} (edited)`,
+                content: editedContent,
+                tags: originalPrompt.tags ? originalPrompt.tags.join(',') : 'imported',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            console.log('Attempting to save prompt:', newPrompt);
+
+            // Save using StorageManager
+            const success = await StorageManager.savePrompt(newPrompt);
+
+            if (success) {
+                // Update usage count
+                const promptIndex = this.communityPrompts.findIndex(p => p.id === promptId);
+                if (promptIndex !== -1) {
+                    this.communityPrompts[promptIndex].usageCount++;
+                }
+
+                // Close modal
+                this.closeViewCommunityModal();
+
+                // Show success message
+                UIManager.showToast('Prompt saved to your collection', 'success');
+
+                // Refresh the prompts tab
+                if (window.PromptsTab && typeof window.PromptsTab.loadPrompts === 'function') {
+                    window.PromptsTab.loadPrompts();
+                }
+
+                // Switch to prompts tab to show the newly added prompt
+                setTimeout(() => {
+                    const promptsTab = document.querySelector('.tab[data-tab="prompts"]');
+                    if (promptsTab && window.app && typeof window.app.switchTab === 'function') {
+                        window.app.switchTab('prompts');
+                    }
+                }, 300);
+            } else {
+                UIManager.showToast('Prompt already exists in your collection', 'info');
             }
         } catch (error) {
-            console.error('Error parsing prompts from localStorage:', error);
+            console.error('Error saving prompt:', error);
+            UIManager.showToast('Failed to save prompt', 'error');
         }
+    },
 
-        // Add new prompt
-        userPrompts.push(newPrompt);
+    /**
+     * Copy prompt content from the view modal to clipboard
+     */
+    copyPromptToClipboard(prompt) {
+        const content = prompt ? (typeof prompt === 'object' ? prompt.content : prompt) : this.elements.viewCommunityPromptContent.textContent;
+        this.copyTextToClipboard(content);
+    },
 
-        // Save to localStorage
-        localStorage.setItem('prompts', JSON.stringify(userPrompts));
-
-        // Update usage count
-        const promptIndex = this.communityPrompts.findIndex(p => p.id === promptId);
-        if (promptIndex !== -1) {
-            this.communityPrompts[promptIndex].usageCount++;
-        }
-
-        // Close modals
-        this.closeViewModal();
-        this.closeViewCommunityModal();
-
-        // Show success message
-        this.showToast('Prompt imported to your collection', 'success');
-    }
-
-    showToast(message, type = 'info') {
-        if (window.showToast) {
-            window.showToast(message, type);
-        } else {
-            console.log(`Toast: ${message} (${type})`);
-        }
-    }
+    /**
+     * Send prompt from the view modal to active tab
+     */
+    sendPromptToActiveTab(prompt) {
+        const content = prompt ? (typeof prompt === 'object' ? prompt.content : prompt) : this.elements.viewCommunityPromptContent.textContent;
+        this.sendTextToActiveTab(content);
+    },
 
     /**
      * Copy text to clipboard
@@ -588,6 +379,28 @@ class CommunityTab {
     copyTextToClipboard(text) {
         if (!text) return;
 
+        try {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    UIManager.showToast('Copied to clipboard!', 'success');
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    UIManager.showToast('Failed to copy text', 'error');
+                    this.fallbackCopyToClipboard(text);
+                });
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            UIManager.showToast('Failed to copy text', 'error');
+            this.fallbackCopyToClipboard(text);
+        }
+    },
+
+    /**
+     * Fallback method to copy text to clipboard
+     * @param {string} text Text to copy
+     */
+    fallbackCopyToClipboard(text) {
         // Create a temporary textarea
         const textarea = document.createElement('textarea');
         textarea.value = text;
@@ -633,7 +446,11 @@ class CommunityTab {
                 UIManager.showToast('No active tab found', 'error');
             }
         });
-    },
-}
+    }
+};
 
-export default CommunityTab; 
+// Initialize the tab when the document is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Make CommunityTab available globally
+    window.CommunityTab = CommunityTab;
+}); 

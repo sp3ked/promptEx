@@ -19,13 +19,28 @@ const StorageManager = {
      */
     savePrompt(prompt) {
         try {
+            // First check if a similar prompt already exists (by title or content)
             const prompts = this.getPrompts();
-            prompts.push({
+            const exists = prompts.some(p =>
+                p.title === prompt.title ||
+                p.content === prompt.content
+            );
+
+            if (exists) {
+                return false; // Prompt already exists
+            }
+
+            // Generate unique ID
+            const newPrompt = {
                 ...prompt,
-                id: Date.now().toString(),
-                createdAt: new Date().toISOString()
-            });
+                id: `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                createdAt: prompt.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            prompts.push(newPrompt);
             localStorage.setItem('prompts', JSON.stringify(prompts));
+            console.log('Prompt saved successfully:', newPrompt);
             return true;
         } catch (error) {
             console.error('Error saving prompt:', error);

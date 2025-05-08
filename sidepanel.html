@@ -68,157 +68,20 @@
                     <div class="search-input-wrapper">
                         <input type="text" id="communitySearchInput" placeholder="Search community prompts...">
                     </div>
+                    <div class="filter-wrapper">
+                        <select id="communityFilter" class="filter-select">
+                            <option value="all">All Categories</option>
+                            <option value="coding">Coding</option>
+                            <option value="writing">Writing</option>
+                            <option value="creative">Creative</option>
+                            <option value="productivity">Productivity</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- Modified to show sections vertically -->
-                <div class="community-sections-wrapper">
-                    <!-- Trending Section -->
-                    <div class="community-section">
-                        <h3 class="section-title">Trending Prompts</h3>
-                        <div class="prompts-container">
-                            <div class="prompt-card" data-prompt-id="trending-1">
-                                <h3 class="prompt-title">
-                                    <span class="prompt-title-text">UI/UX Design Review</span>
-                                    <div class="title-buttons">
-                                        <button class="btn-icon btn-copy" title="Copy to clipboard"><i
-                                                class="fas fa-copy"></i></button>
-                                        <button class="btn-icon btn-send send" title="Send to active tab"><i
-                                                class="fas fa-paper-plane"></i></button>
-                                    </div>
-                                </h3>
-                                <p class="prompt-content">Analyze this UI design for usability issues and suggest
-                                    improvements. Please consider:
-
-                                    1. Accessibility concerns
-                                    2. User flow optimization
-                                    3. Visual hierarchy</p>
-                                <div class="prompt-meta">
-                                    <span>By: DesignPro</span>
-                                </div>
-                            </div>
-                            <div class="prompt-card" data-prompt-id="trending-2">
-                                <h3 class="prompt-title">
-                                    <span class="prompt-title-text">Research Paper Summary</span>
-                                    <div class="title-buttons">
-                                        <button class="btn-icon btn-copy" title="Copy to clipboard"><i
-                                                class="fas fa-copy"></i></button>
-                                        <button class="btn-icon btn-send send" title="Send to active tab"><i
-                                                class="fas fa-paper-plane"></i></button>
-                                    </div>
-                                </h3>
-                                <p class="prompt-content">Create a concise summary of this research paper, highlighting
-                                    key
-                                    findings. Please include:
-
-                                    1. The main research question/objective
-                                    2. Methodology overview
-                                    3. Key results and discoveries</p>
-                                <div class="prompt-meta">
-                                    <span>By: AcademicWriter</span>
-                                </div>
-                            </div>
-                            <div class="prompt-card" data-prompt-id="trending-3">
-                                <h3 class="prompt-title">
-                                    <span class="prompt-title-text">Product Description Generator</span>
-                                    <div class="title-buttons">
-                                        <button class="btn-icon btn-copy" title="Copy to clipboard"><i
-                                                class="fas fa-copy"></i></button>
-                                        <button class="btn-icon btn-send send" title="Send to active tab"><i
-                                                class="fas fa-paper-plane"></i></button>
-                                    </div>
-                                </h3>
-                                <p class="prompt-content">Create compelling product descriptions based on these key
-                                    features
-                                    and benefits. The descriptions should:
-
-                                    1. Hook the reader with a strong opening
-                                    2. Highlight unique selling points
-                                    3. Address customer pain points</p>
-                                <div class="prompt-meta">
-                                    <span>By: MarketingGuru</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Top Rated Section -->
-                    <div class="community-section">
-                        <h3 class="section-title">Top Rated Prompts</h3>
-                        <div class="prompts-container">
-                            <div class="prompt-card" data-prompt-id="rated-1">
-                                <h3 class="prompt-title">
-                                    <span class="prompt-title-text">Python Debugging Assistant</span>
-                                    <div class="title-buttons">
-                                        <button class="btn-icon btn-copy" title="Copy to clipboard"><i
-                                                class="fas fa-copy"></i></button>
-                                        <button class="btn-icon btn-send send" title="Send to active tab"><i
-                                                class="fas fa-paper-plane"></i></button>
-                                    </div>
-                                </h3>
-                                <p class="prompt-content">Analyze my Python code and identify bugs, logic errors, and
-                                    performance issues. Please check for:
-
-                                    1. Syntax errors
-                                    2. Logic flaws
-                                    3. Performance bottlenecks</p>
-                                <div class="prompt-meta">
-                                    <span>By: CodeMaster</span>
-                                </div>
-                            </div>
-                            <div class="prompt-card" data-prompt-id="rated-2">
-                                <h3 class="prompt-title">
-                                    <span class="prompt-title-text">Travel Itinerary Planner</span>
-                                    <div class="title-buttons">
-                                        <button class="btn-icon btn-copy" title="Copy to clipboard"><i
-                                                class="fas fa-copy"></i></button>
-                                        <button class="btn-icon btn-send send" title="Send to active tab"><i
-                                                class="fas fa-paper-plane"></i></button>
-                                    </div>
-                                </h3>
-                                <p class="prompt-content">Help me create a detailed travel itinerary for my upcoming
-                                    trip to
-                                    [DESTINATION]. Please include:
-
-                                    1. Daily schedule with attractions
-                                    2. Restaurant recommendations
-                                    3. Transportation options</p>
-                                <div class="prompt-meta">
-                                    <span>By: AdventureSeeker</span>
-                                </div>
-                            </div>
-                            <div class="prompt-card" data-prompt-id="rated-3">
-                                <h3 class="prompt-title">
-                                    <span class="prompt-title-text">Recipe Creator</span>
-                                    <div class="title-buttons">
-                                        <button class="btn-icon btn-copy" title="Copy to clipboard"><i
-                                                class="fas fa-copy"></i></button>
-                                        <button class="btn-icon btn-send send" title="Send to active tab"><i
-                                                class="fas fa-paper-plane"></i></button>
-                                    </div>
-                                </h3>
-                                <p class="prompt-content">Create a delicious recipe based on these ingredients I have
-                                    available: [LIST INGREDIENTS]. The recipe should:
-
-                                    1. Be relatively easy to make
-                                    2. Include all preparation steps
-                                    3. Provide cooking times and temperatures</p>
-                                <div class="prompt-meta">
-                                    <span>By: ChefExtraordinaire</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Jailbreak Section -->
-                    <div class="community-section">
-                        <h3 class="section-title">Jailbreak Prompts</h3>
-                        <div class="prompts-container">
-                            <div class="placeholder jailbreak-placeholder">
-                                <p><i class="fas fa-lock"></i> Jailbreak prompts coming soon!</p>
-                                <p class="placeholder-subtitle">Advanced prompt techniques will be available in a future
-                                    update.</p>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Community content using the same structure as prompts -->
+                <div class="prompts-container" id="communityPromptContainer">
+                    <!-- Community prompts will be dynamically loaded here by JavaScript -->
                 </div>
             </div>
 
@@ -350,32 +213,28 @@
         <div class="modal-content view-community-modal">
             <div class="modal-header">
                 <h3 id="viewCommunityPromptTitle">Prompt Title</h3>
-                <div class="modal-actions">
-                    <button class="btn btn-icon" id="closeViewCommunityPromptBtn" title="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+                <button class="btn-icon" id="closeViewCommunityPromptBtn" title="Close">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="prompt-view-container">
-                <div class="prompt-view-content" id="viewCommunityPromptContent">
-                    Prompt content will appear here...
-                </div>
+                <div class="prompt-view-content" id="viewCommunityPromptContent"></div>
                 <div class="prompt-view-meta">
                     <p id="viewCommunityPromptAuthor">Created by: Author</p>
                 </div>
             </div>
             <div class="modal-actions">
-                <div>
-                    <button class="btn btn-secondary" id="saveToMyPromptsBtn" title="Save to my prompts">
-                        <i class="fas fa-save"></i> Save to My Prompts
+                <div class="action-group-left">
+                    <button class="btn btn-sm btn-tertiary" id="copyFromViewPromptBtn" title="Copy">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" id="sendFromViewPromptBtn" title="Send">
+                        <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
-                <div>
-                    <button class="btn btn-tertiary" id="copyFromViewPromptBtn" title="Copy">
-                        <i class="fas fa-copy"></i> Copy
-                    </button>
-                    <button class="btn btn-primary" id="sendFromViewPromptBtn" title="Send">
-                        <i class="fas fa-paper-plane"></i> Send
+                <div class="action-group-right">
+                    <button class="btn btn-secondary" id="saveToMyPromptsBtn" title="Save to my prompts">
+                        <i class="fas fa-save"></i> Save
                     </button>
                 </div>
             </div>
@@ -525,27 +384,22 @@
         </div>
     </div>
 
-    <!-- Load JavaScript modules in correct dependency order -->
     <!-- First load utility modules -->
-    <script src="js/utils/ui.js"></script>
-    <script src="js/utils/storage.js"></script>
-    <script src="js/utils/injection.js"></script>
+    <script src="js/utils/ui-manager.js"></script>
+    <script src="js/utils/storage-manager.js"></script>
+    <script src="js/utils/injection-manager.js"></script>
 
     <!-- Then load tab modules -->
     <script src="js/tabs/prompts.js"></script>
     <script src="js/tabs/community.js"></script>
     <script src="js/tabs/generate.js"></script>
+    <script src="js/tabs/settings.js"></script>
 
     <!-- Finally load the main app -->
     <script src="js/main.js"></script>
 
     <!-- Initialize the app -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize all modules
-            const app = new App();
-        });
-    </script>
+    <script src="sidepanel.js"></script>
 </body>
 
 </html>

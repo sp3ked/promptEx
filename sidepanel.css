@@ -182,12 +182,13 @@
 /* Tab content styles */
 .tab-content {
     display: none;
-    overflow-y: auto;
+    height: 100%;
     flex: 1;
     position: relative;
     z-index: 1;
     background-color: #1E2736;
     min-height: 0;
+    overflow: hidden;
 }
 
 .tab-content.active {
@@ -361,10 +362,15 @@
 
 /* Ensure containers flex with screen size */
 .prompts-container,
+.community-prompts-container,
 .community-sections-wrapper {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow-y: auto;
+    height: 100%;
+    flex: 1 1 auto;
+    padding-bottom: 24px;
 }
 
 /* Prompt card title responsiveness */
@@ -406,28 +412,31 @@
 /* Toast notification styles */
 .toast {
     position: fixed;
-    bottom: 30px;
+    bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: rgba(30, 41, 59, 0.9);
+    background-color: rgba(10, 15, 25, 0.95);
     color: var(--text-light);
-    padding: 12px 24px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    font-size: 14px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    font-size: 10px;
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: opacity 0.2s ease;
     pointer-events: none;
     text-align: center;
-    border-left: 4px solid var(--primary-teal);
-    max-width: 80%;
+    border-left: 2px solid var(--primary-teal);
+    width: 140px;
+    max-width: 140px;
+    height: auto;
+    max-height: 22px;
+    overflow: hidden;
 }
 
 .toast.show {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    pointer-events: auto;
+    pointer-events: none;
 }
 
 .toast-success {
