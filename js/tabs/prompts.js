@@ -279,10 +279,6 @@ const PromptsTab = {
             <h3 class="prompt-title">
                 <span class="prompt-title-text">${sanitizedTitle}</span>
                 <div class="title-buttons">
-                    <button class="btn-icon btn-pin" title="${prompt.pinned ? 'Unpin prompt' : 'Pin prompt'}">
-                        <i class="fas ${prompt.pinned ? 'fa-thumbtack' : 'fa-thumbtack unpinned'}"></i>
-                    </button>
-                    <button class="btn-icon btn-expand" title="Expand to full view"><i class="fas fa-expand-alt"></i></button>
                     <button class="btn-icon btn-copy" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
                     <button class="btn-icon btn-send send" title="Send to active tab"><i class="fas fa-paper-plane"></i></button>
                     <button class="btn-icon delete" title="Delete prompt"><i class="fas fa-trash"></i></button>
@@ -292,8 +288,15 @@ const PromptsTab = {
             <div class="prompt-meta">
                 <span>Created: ${formattedDate}</span>
                 ${prompt.pinned ? '<span class="pinned-indicator"><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
+                <button class="btn-icon btn-pin pin-bottom" title="${prompt.pinned ? 'Unpin prompt' : 'Pin prompt'}">
+                    <i class="fas ${prompt.pinned ? 'fa-thumbtack' : 'fa-thumbtack unpinned'}"></i>
+                </button>
             </div>
         `;
+
+        // After card is created, update the content class for line logic
+        const contentEl = card.querySelector('.prompt-content');
+        if (contentEl) updateContentClass(contentEl);
 
         // Add event listeners to the card buttons
         card.querySelector('.btn-copy').addEventListener('click', (e) => {
@@ -316,11 +319,8 @@ const PromptsTab = {
             this.showDeleteConfirmationForPrompt(prompt.id);
         });
 
-        card.querySelector('.btn-expand').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.showExpandView(prompt);
-        });
-
+        // Remove event listener for expand button
+        // Add event listener for new pin button
         card.querySelector('.btn-pin').addEventListener('click', (e) => {
             e.stopPropagation();
             this.togglePinPrompt(prompt);
@@ -334,17 +334,36 @@ const PromptsTab = {
         return card;
     },
 
+    // Add this utility function for dynamic line class
+    updateContentClass(element) {
+        const text = element.textContent;
+        const lineLength = 50; // approximate characters per line
+        const lines = Math.ceil(text.length / lineLength);
+        element.classList.remove('short', 'medium', 'long');
+        if (lines <= 2) {
+            element.classList.add('short');
+        } else if (lines <= 4) {
+            element.classList.add('medium');
+        } else {
+            element.classList.add('long');
+        }
+    },
+
     /**
      * Toggle pin status for a prompt
      * @param {Object} prompt Prompt to toggle pin status
      */
     async togglePinPrompt(prompt) {
         try {
-            const updatedPrompt = { ...prompt, pinned: !prompt.pinned };
-            const success = await StorageManager.updatePrompt(prompt.id, updatedPrompt);
+            const payload = {
+                pinned: !prompt.pinned,
+                updatedAt: prompt.updatedAt
+            };
+
+            const success = await StorageManager.updatePrompt(prompt.id, payload);
 
             if (success) {
-                UIManager.showToast(`Prompt ${updatedPrompt.pinned ? 'pinned' : 'unpinned'} successfully!`, 'success');
+                UIManager.showToast(`Prompt ${payload.pinned ? 'pinned' : 'unpinned'} successfully!`, 'success');
             } else {
                 UIManager.showToast('Failed to update pin status', 'error');
             }

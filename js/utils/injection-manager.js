@@ -82,18 +82,6 @@ const InjectionManager = {
             // Show initial loading toast
             createToast("Sending prompt...", "info");
 
-            // Create a timeout promise
-            const timeoutPromise = new Promise((_, timeoutReject) => {
-                setTimeout(() => {
-                    createErrorToastWithDetails(
-                        "Injection timed out. Make sure you are on a supported LLM website." +
-                        "<details><summary>Supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Gemini (gemini.google.com)<br>• Perplexity (perplexity.ai)</details>",
-                        "error"
-                    );
-                    timeoutReject(new Error('Injection timed out'));
-                }, 1500); // Reduced to 1.5 seconds for faster feedback
-            });
-
             // Create the injection promise
             const injectionPromise = new Promise(async (injectionResolve, injectionReject) => {
                 try {
@@ -123,15 +111,13 @@ const InjectionManager = {
                     }
 
                     createErrorToastWithDetails(
-                        errorMsg + "<details><summary>Supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Gemini (gemini.google.com)<br>• Perplexity (perplexity.ai)</details>",
-                        "error"
+                        errorMsg + " (ChatGPT, Claude, etc.)"
                     );
                     injectionReject(new Error(errorMsg));
                 }
             });
 
-            // Race between timeout and injection
-            Promise.race([injectionPromise, timeoutPromise])
+            injectionPromise
                 .then(resolve)
                 .catch(reject);
         });

@@ -120,17 +120,19 @@
     line-height: 1.5;
     color: var(--text-medium);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: pre-wrap;
+    max-height: 4.5em;
+    /* Ensure max height for 3 lines */
 }
 
 /* Ensure consistent preview across tabs */
 #communityPromptContainer .prompt-content {
     display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
+    -webkit-line-clamp: 3 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
 }
@@ -145,6 +147,10 @@
     align-items: center;
     background-color: rgba(15, 23, 42, 0.3);
     gap: 8px;
+}
+
+.prompt-meta .btn-pin {
+    margin-left: auto;
 }
 
 /* Title Buttons */
@@ -327,10 +333,10 @@
 
 #searchInput {
     flex: 1;
-    padding: 8px 12px;
+    padding: 9px 12px;
     border-radius: 4px;
     font-size: 14px;
-    background: var(--metal-grey);
+    background: rgba(0, 0, 0, 0.65);
     border: 1px solid rgba(0, 212, 255, 0.3);
     color: var(--text-light);
 }
@@ -346,7 +352,7 @@
     margin-bottom: 8px;
     display: flex;
     justify-content: flex-start;
-    align-items: center;
+    align-items: stretch;
 }
 
 /* Responsive adjustments */

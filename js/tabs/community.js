@@ -254,6 +254,10 @@ const CommunityTab = {
             this.openViewCommunityModal(prompt.id);
         });
 
+        // After card is created, update the content class for line logic
+        const contentEl = card.querySelector('.prompt-content');
+        if (contentEl) updateContentClass(contentEl);
+
         return card;
     },
 
@@ -497,4 +501,19 @@ const CommunityTab = {
 document.addEventListener('DOMContentLoaded', () => {
     // Make CommunityTab available globally
     window.CommunityTab = CommunityTab;
-}); 
+});
+
+// Add this utility function for dynamic line class
+function updateContentClass(element) {
+    const text = element.textContent;
+    const lineLength = 50; // approximate characters per line
+    const lines = Math.ceil(text.length / lineLength);
+    element.classList.remove('short', 'medium', 'long');
+    if (lines <= 2) {
+        element.classList.add('short');
+    } else if (lines <= 4) {
+        element.classList.add('medium');
+    } else {
+        element.classList.add('long');
+    }
+} 
