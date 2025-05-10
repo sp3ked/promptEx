@@ -19,21 +19,18 @@ const SettingsTab = {
         this.settingsForm = document.getElementById('settingsForm');
         this.themeSelect = document.getElementById('themeSelect');
         this.fontSizeSelect = document.getElementById('fontSizeSelect');
-        this.autoSaveToggle = document.getElementById('autoSaveToggle');
-        this.saveSettingsBtn = document.getElementById('saveSettingsBtn');
-        this.resetSettingsBtn = document.getElementById('resetSettingsBtn');
         this.faqBtn = document.getElementById('faqBtn');
         this.faqModal = document.getElementById('faqModal');
         this.closeFaqBtn = document.getElementById('closeFaqBtn');
+        this.closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
+        this.settingsModal = document.getElementById('settingsModal');
+        this.settingsBtn = document.getElementById('settingsBtn');
     },
 
     /**
      * Bind event listeners
      */
     bindEvents() {
-        this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
-        this.resetSettingsBtn.addEventListener('click', () => this.resetSettings());
-
         // FAQ modal events
         this.faqBtn.addEventListener('click', () => {
             this.faqModal.classList.add('show');
@@ -50,9 +47,20 @@ const SettingsTab = {
             }
         });
 
-        // Auto-save toggle
-        this.autoSaveToggle.addEventListener('change', () => {
-            this.saveSettings();
+        // Settings modal events
+        this.settingsBtn.addEventListener('click', () => {
+            this.settingsModal.classList.add('show');
+        });
+
+        this.closeSettingsModalBtn.addEventListener('click', () => {
+            this.settingsModal.classList.remove('show');
+        });
+
+        // Close settings modal when clicking outside
+        this.settingsModal.addEventListener('click', (e) => {
+            if (e.target === this.settingsModal) {
+                this.settingsModal.classList.remove('show');
+            }
         });
     },
 
@@ -60,12 +68,9 @@ const SettingsTab = {
      * Load settings from storage
      */
     loadSettings() {
-        const settings = StorageManager.getSettings();
-
         // Set form values
         this.themeSelect.value = 'dark';
         this.fontSizeSelect.value = '16';
-        this.autoSaveToggle.checked = settings.autoSave || false;
 
         // Apply settings
         document.documentElement.setAttribute('data-theme', 'dark');

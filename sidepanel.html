@@ -29,7 +29,10 @@
                 <button id="newPromptBtn">
                     <i class="fas fa-plus"></i> New Prompt
                 </button>
-                <button id="settingsBtn" title="Settings">
+                <button id="faqBtn" class="btn-icon" title="FAQ">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+                <button id="settingsBtn" class="btn-icon" title="Settings">
                     <i class="fas fa-cog"></i>
                 </button>
             </div>
@@ -391,25 +394,12 @@
                             <select id="themeSelect" class="form-control" disabled>
                                 <option value="dark">Dark</option>
                             </select>
-                            <span class="setting-note">Dark theme is currently the only option</span>
                         </div>
                         <div class="option">
                             <label for="fontSizeSelect">Font Size</label>
                             <select id="fontSizeSelect" class="form-control" disabled>
                                 <option value="16">Medium</option>
                             </select>
-                            <span class="setting-note">Font size is currently locked</span>
-                        </div>
-                    </div>
-
-                    <div class="settings-section behavior-section">
-                        <h3 class="settings-section-title">Behavior</h3>
-                        <div class="option switch-option">
-                            <label for="autoSaveToggle">Auto-save prompts</label>
-                            <label class="switch">
-                                <input type="checkbox" id="autoSaveToggle">
-                                <span class="slider round"></span>
-                            </label>
                         </div>
                     </div>
 
@@ -421,22 +411,7 @@
                             <p><strong>Version:</strong> 1.0.0</p>
                         </div>
                     </div>
-
-                    <div class="settings-section faq-section">
-                        <h3 class="settings-section-title">Help</h3>
-                        <button type="button" class="btn btn-outline btn-full" id="faqBtn">
-                            <i class="fas fa-question-circle"></i> FAQ
-                        </button>
-                    </div>
                 </form>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-tertiary" id="resetSettingsBtn">
-                    <i class="fas fa-undo"></i> Reset
-                </button>
-                <button type="button" class="btn btn-primary" id="saveSettingsBtn">
-                    <i class="fas fa-save"></i> Save
-                </button>
             </div>
         </div>
     </div>

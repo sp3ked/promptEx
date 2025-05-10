@@ -14,7 +14,7 @@ class App {
         PromptsTab.init();
         CommunityTab.init();
         GenerateTab.init();
-        this.initializeSettings();
+        SettingsTab.init();
     }
 
     /**
@@ -32,8 +32,6 @@ class App {
         this.settingsBtn = document.getElementById('settingsBtn');
         this.settingsModal = document.getElementById('settingsModal');
         this.closeSettingsModalBtn = document.getElementById('closeSettingsModalBtn');
-        this.saveSettingsBtn = document.getElementById('saveSettingsBtn');
-        this.resetSettingsBtn = document.getElementById('resetSettingsBtn');
     }
 
     /**
@@ -62,23 +60,19 @@ class App {
 
         // Settings button
         this.settingsBtn.addEventListener('click', () => {
-            this.showSettingsModal();
+            this.settingsModal.classList.add('show');
         });
 
         // Close settings modal
         this.closeSettingsModalBtn.addEventListener('click', () => {
-            this.closeSettingsModal();
+            this.settingsModal.classList.remove('show');
         });
 
-        // Save settings button
-        this.saveSettingsBtn.addEventListener('click', () => {
-            this.saveSettings();
-            this.closeSettingsModal();
-        });
-
-        // Reset settings button
-        this.resetSettingsBtn.addEventListener('click', () => {
-            this.resetSettings();
+        // Close settings modal when clicking outside
+        this.settingsModal.addEventListener('click', (e) => {
+            if (e.target === this.settingsModal) {
+                this.settingsModal.classList.remove('show');
+            }
         });
 
         // Listen for toast messages from content script
@@ -99,31 +93,6 @@ class App {
         chrome.storage.local.get('activeTab', (result) => {
             const activeTab = result.activeTab || 'prompts';
             this.switchTab(activeTab);
-        });
-    }
-
-    /**
-     * Initialize settings
-     */
-    initializeSettings() {
-        // Load settings from storage
-        chrome.storage.local.get('settings', (result) => {
-            const settings = result.settings || {
-                theme: 'dark',
-                fontSize: '16',
-                autoSave: true
-            };
-
-            // Apply settings to the UI
-            document.getElementById('themeSelect').value = settings.theme;
-            document.getElementById('fontSizeSelect').value = settings.fontSize;
-            document.getElementById('autoSaveToggle').checked = settings.autoSave;
-
-            // Apply theme
-            document.body.setAttribute('data-theme', settings.theme);
-
-            // Apply font size
-            document.documentElement.style.fontSize = `${settings.fontSize}px`;
         });
     }
 
@@ -152,67 +121,6 @@ class App {
 
         // Save active tab to storage
         chrome.storage.local.set({ activeTab: tabName });
-    }
-
-    /**
-     * Show settings modal
-     */
-    showSettingsModal() {
-        this.settingsModal.classList.add('show');
-    }
-
-    /**
-     * Close settings modal
-     */
-    closeSettingsModal() {
-        this.settingsModal.classList.remove('show');
-    }
-
-    /**
-     * Save settings
-     */
-    saveSettings() {
-        const settings = {
-            theme: document.getElementById('themeSelect').value,
-            fontSize: document.getElementById('fontSizeSelect').value,
-            autoSave: document.getElementById('autoSaveToggle').checked
-        };
-
-        // Save settings to storage
-        chrome.storage.local.set({ settings }, () => {
-            // Apply settings
-            document.body.setAttribute('data-theme', settings.theme);
-            document.documentElement.style.fontSize = `${settings.fontSize}px`;
-
-            // Show toast
-            UIManager.showToast('Settings saved!', 'success');
-        });
-    }
-
-    /**
-     * Reset settings to defaults
-     */
-    resetSettings() {
-        const defaults = {
-            theme: 'dark',
-            fontSize: '16',
-            autoSave: true
-        };
-
-        // Reset UI
-        document.getElementById('themeSelect').value = defaults.theme;
-        document.getElementById('fontSizeSelect').value = defaults.fontSize;
-        document.getElementById('autoSaveToggle').checked = defaults.autoSave;
-
-        // Save defaults
-        chrome.storage.local.set({ settings: defaults }, () => {
-            // Apply settings
-            document.body.setAttribute('data-theme', defaults.theme);
-            document.documentElement.style.fontSize = `${defaults.fontSize}px`;
-
-            // Show toast
-            UIManager.showToast('Settings reset to defaults', 'info');
-        });
     }
 }
 

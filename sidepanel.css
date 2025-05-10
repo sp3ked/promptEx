@@ -47,7 +47,29 @@ body {
     display: flex;
     gap: 8px;
     align-items: center;
-    flex-shrink: 0;
+}
+
+.header-actions .btn-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.header-actions .btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--neon-cyan);
+}
+
+#faqBtn {
+    font-size: 16px;
 }
 
 /* New Prompt Button */
