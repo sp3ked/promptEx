@@ -85,6 +85,8 @@ class App {
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (request.action === "showToast") {
                 UIManager.showToast(request.message, request.type);
+            } else if (request.action === "showErrorWithDetails") {
+                UIManager.showErrorWithDetails(request.message, request.type);
             }
         });
     }

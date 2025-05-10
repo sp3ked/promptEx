@@ -16,19 +16,91 @@ const InjectionManager = {
                 return;
             }
 
-            // Use chrome.scripting.executeScript for direct injection
-            chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-                if (!tabs || !tabs[0]) {
-                    reject(new Error('No active tab found'));
+            // Show loading toast immediately
+            const createToast = (message, type) => {
+                const toastContainer = document.getElementById('toastContainer');
+                if (!toastContainer) {
+                    console.error('Toast container not found');
                     return;
                 }
 
+                // Create a new toast element
+                const newToast = document.createElement('div');
+                newToast.className = `toast toast-${type}`;
+                newToast.textContent = message;
+
+                // Add to the toast container
+                toastContainer.appendChild(newToast);
+
+                // Show the toast with a slight delay for animation
+                setTimeout(() => {
+                    newToast.classList.add('show');
+                }, 10);
+
+                // Remove the toast after it fades out
+                setTimeout(() => {
+                    newToast.classList.add('fadeout');
+                    setTimeout(() => {
+                        if (newToast.parentNode) {
+                            newToast.parentNode.removeChild(newToast);
+                        }
+                    }, 300);
+                }, type === 'error' ? 5000 : 3000);
+            };
+
+            const createErrorToastWithDetails = (message, type) => {
+                const toastContainer = document.getElementById('toastContainer');
+                if (!toastContainer) {
+                    console.error('Toast container not found');
+                    return;
+                }
+
+                // Create a new toast element with details
+                const newToast = document.createElement('div');
+                newToast.className = `toast toast-${type} toast-with-details`;
+                newToast.innerHTML = message;
+
+                // Add to the toast container
+                toastContainer.appendChild(newToast);
+
+                // Show the toast with a slight delay for animation
+                setTimeout(() => {
+                    newToast.classList.add('show');
+                }, 10);
+
+                // Remove the toast after it fades out
+                setTimeout(() => {
+                    newToast.classList.add('fadeout');
+                    setTimeout(() => {
+                        if (newToast.parentNode) {
+                            newToast.parentNode.removeChild(newToast);
+                        }
+                    }, 300);
+                }, 5000);
+            };
+
+            // Show initial loading toast
+            createToast("Sending prompt...", "info");
+
+            // Create a timeout promise
+            const timeoutPromise = new Promise((_, timeoutReject) => {
+                setTimeout(() => {
+                    createErrorToastWithDetails(
+                        "Injection timed out. Make sure you are on a supported LLM website." +
+                        "<details><summary>Supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Gemini (gemini.google.com)<br>• Perplexity (perplexity.ai)</details>",
+                        "error"
+                    );
+                    timeoutReject(new Error('Injection timed out'));
+                }, 1500); // Reduced to 1.5 seconds for faster feedback
+            });
+
+            // Create the injection promise
+            const injectionPromise = new Promise(async (injectionResolve, injectionReject) => {
                 try {
-                    chrome.runtime.sendMessage({
-                        action: "showToast",
-                        message: "Sending prompt...",
-                        type: "info"
-                    });
+                    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                    if (!tabs || !tabs[0]) {
+                        throw new Error('No active tab found');
+                    }
 
                     await chrome.scripting.executeScript({
                         target: { tabId: tabs[0].id },
@@ -37,17 +109,11 @@ const InjectionManager = {
                         world: 'MAIN'
                     });
 
-                    chrome.runtime.sendMessage({
-                        action: "showToast",
-                        message: "Prompt sent successfully!",
-                        type: "success"
-                    });
-
-                    resolve();
+                    createToast("Prompt sent successfully!", "success");
+                    injectionResolve();
                 } catch (error) {
                     console.error('Injection failed:', error);
 
-                    // Create a more user-friendly error message
                     let errorMsg = "You are not on an LLM website. Please navigate to a supported website to use the prompt injection.";
 
                     if (error.message && error.message.includes("Cannot access")) {
@@ -56,15 +122,18 @@ const InjectionManager = {
                         errorMsg = "Connection failed. Please navigate to a supported LLM website and try again.";
                     }
 
-                    chrome.runtime.sendMessage({
-                        action: "showErrorWithDetails",
-                        message: errorMsg + "<details><summary>Supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Gemini (gemini.google.com)<br>• Perplexity (perplexity.ai)</details>",
-                        type: "error"
-                    });
-
-                    reject(new Error(errorMsg));
+                    createErrorToastWithDetails(
+                        errorMsg + "<details><summary>Supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Gemini (gemini.google.com)<br>• Perplexity (perplexity.ai)</details>",
+                        "error"
+                    );
+                    injectionReject(new Error(errorMsg));
                 }
             });
+
+            // Race between timeout and injection
+            Promise.race([injectionPromise, timeoutPromise])
+                .then(resolve)
+                .catch(reject);
         });
     }
 };
