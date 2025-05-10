@@ -67,8 +67,9 @@ const StorageManager = {
                         title: promptData.title,
                         content: promptData.content,
                         tags: promptData.tags || '',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
+                        pinned: promptData.pinned || false,
+                        createdAt: promptData.createdAt || new Date().toISOString(),
+                        updatedAt: promptData.updatedAt || new Date().toISOString()
                     };
 
                     prompts.push(newPrompt);

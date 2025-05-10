@@ -33,6 +33,7 @@ const PromptsTab = {
         this.elements = {
             promptsContainer: document.getElementById('promptsContainer'),
             searchInput: document.getElementById('searchInput'),
+            sortSelect: document.getElementById('sortSelect'),
             newPromptModal: document.getElementById('newPromptModal'),
             newPromptTitle: document.getElementById('newPromptTitle'),
             newPromptTextarea: document.getElementById('newPromptTextarea'),
@@ -47,10 +48,10 @@ const PromptsTab = {
             deleteFromViewBtn: document.getElementById('deleteFromViewBtn'),
             copyFromViewBtn: document.getElementById('copyFromViewBtn'),
             sendFromViewBtn: document.getElementById('sendFromViewBtn'),
+            pinFromViewBtn: document.getElementById('pinFromViewBtn'),
             deleteModal: document.getElementById('deleteModal'),
             confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
             cancelDeleteBtn: document.getElementById('cancelDeleteBtn'),
-            // New expand view elements
             expandViewModal: document.getElementById('expandViewModal'),
             expandViewTitle: document.getElementById('expandViewTitle'),
             expandViewContent: document.getElementById('expandViewContent'),
@@ -76,12 +77,25 @@ const PromptsTab = {
         this.elements.cancelNewPromptBtn.addEventListener('click', () => this.closeModal(this.elements.newPromptModal));
         this.elements.createNewPromptBtn.addEventListener('click', () => this.createNewPrompt());
 
+        // Sort select
+        if (this.elements.sortSelect) {
+            this.elements.sortSelect.addEventListener('change', () => {
+                this.sortPrompts();
+                this.renderPrompts();
+            });
+        }
+
         // View/Edit modal
         this.elements.closeViewEditBtn.addEventListener('click', () => this.closeModal(this.elements.viewEditModal));
         this.elements.saveFromViewBtn.addEventListener('click', () => this.updatePrompt());
         this.elements.deleteFromViewBtn.addEventListener('click', () => this.showDeleteConfirmation());
         this.elements.copyFromViewBtn.addEventListener('click', () => this.copyCurrentPromptToClipboard());
         this.elements.sendFromViewBtn.addEventListener('click', () => this.sendCurrentPromptToActiveTab());
+
+        // Pin button in view modal
+        if (this.elements.pinFromViewBtn) {
+            this.elements.pinFromViewBtn.addEventListener('click', () => this.togglePinCurrentPrompt());
+        }
 
         // Delete confirmation modal
         this.elements.confirmDeleteBtn.addEventListener('click', () => this.deletePrompt());
@@ -128,17 +142,71 @@ const PromptsTab = {
             return;
         }
 
-        // Sort prompts by date with most recent first
-        const sortedPrompts = prompts.sort((a, b) => {
-            // Use updatedAt if available, otherwise use createdAt
-            const dateA = a.updatedAt || a.createdAt;
-            const dateB = b.updatedAt || b.createdAt;
-            return new Date(dateB) - new Date(dateA);
-        });
+        // Sort the prompts using the sortPrompts method
+        this.prompts = prompts;
+        this.sortPrompts();
 
-        sortedPrompts.forEach(prompt => {
+        // Render the sorted prompts
+        this.renderPrompts();
+    },
+
+    /**
+     * Render the sorted prompts
+     */
+    renderPrompts() {
+        this.elements.promptsContainer.innerHTML = '';
+        this.prompts.forEach(prompt => {
             this.elements.promptsContainer.appendChild(this.createPromptCard(prompt));
         });
+    },
+
+    /**
+     * Sort prompts according to selected criteria
+     */
+    sortPrompts() {
+        if (!this.prompts || this.prompts.length === 0) return;
+
+        const sortCriteria = this.elements.sortSelect ? this.elements.sortSelect.value : 'recent';
+
+        // First separate pinned and unpinned prompts
+        const pinnedPrompts = this.prompts.filter(p => p.pinned);
+        const unpinnedPrompts = this.prompts.filter(p => !p.pinned);
+
+        // Sort each group separately
+        switch (sortCriteria) {
+            case 'titleAsc':
+                pinnedPrompts.sort((a, b) => a.title.localeCompare(b.title));
+                unpinnedPrompts.sort((a, b) => a.title.localeCompare(b.title));
+                break;
+
+            case 'titleDesc':
+                pinnedPrompts.sort((a, b) => b.title.localeCompare(a.title));
+                unpinnedPrompts.sort((a, b) => b.title.localeCompare(a.title));
+                break;
+
+            case 'oldest':
+                pinnedPrompts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                unpinnedPrompts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                break;
+
+            case 'recent':
+            default:
+                // Default to most recent first
+                pinnedPrompts.sort((a, b) => {
+                    const dateA = a.updatedAt || a.createdAt;
+                    const dateB = b.updatedAt || b.createdAt;
+                    return new Date(dateB) - new Date(dateA);
+                });
+                unpinnedPrompts.sort((a, b) => {
+                    const dateA = a.updatedAt || a.createdAt;
+                    const dateB = b.updatedAt || b.createdAt;
+                    return new Date(dateB) - new Date(dateA);
+                });
+                break;
+        }
+
+        // Combine pinned prompts first, then unpinned prompts
+        this.prompts = [...pinnedPrompts, ...unpinnedPrompts];
     },
 
     /**
@@ -147,7 +215,14 @@ const PromptsTab = {
     filterPrompts() {
         const searchTerm = this.elements.searchInput.value.toLowerCase();
         const prompts = StorageManager.getPrompts();
-        this.elements.promptsContainer.innerHTML = '';
+
+        if (searchTerm === '') {
+            // If no search term, just load all prompts sorted normally
+            this.prompts = prompts;
+            this.sortPrompts();
+            this.renderPrompts();
+            return;
+        }
 
         const filteredPrompts = prompts.filter(prompt =>
             prompt.title.toLowerCase().includes(searchTerm) ||
@@ -164,17 +239,10 @@ const PromptsTab = {
             return;
         }
 
-        // Sort filtered prompts by date with most recent first
-        const sortedPrompts = filteredPrompts.sort((a, b) => {
-            // Use updatedAt if available, otherwise use createdAt
-            const dateA = a.updatedAt || a.createdAt;
-            const dateB = b.updatedAt || b.createdAt;
-            return new Date(dateB) - new Date(dateA);
-        });
-
-        sortedPrompts.forEach(prompt => {
-            this.elements.promptsContainer.appendChild(this.createPromptCard(prompt));
-        });
+        // Store filtered prompts and sort them
+        this.prompts = filteredPrompts;
+        this.sortPrompts();
+        this.renderPrompts();
     },
 
     /**
@@ -185,6 +253,7 @@ const PromptsTab = {
     createPromptCard(prompt) {
         const card = document.createElement('div');
         card.className = 'prompt-card';
+        if (prompt.pinned) card.classList.add('pinned');
         card.dataset.id = prompt.id;
 
         // Sanitize HTML content
@@ -210,6 +279,9 @@ const PromptsTab = {
             <h3 class="prompt-title">
                 <span class="prompt-title-text">${sanitizedTitle}</span>
                 <div class="title-buttons">
+                    <button class="btn-icon btn-pin" title="${prompt.pinned ? 'Unpin prompt' : 'Pin prompt'}">
+                        <i class="fas ${prompt.pinned ? 'fa-thumbtack' : 'fa-thumbtack unpinned'}"></i>
+                    </button>
                     <button class="btn-icon btn-expand" title="Expand to full view"><i class="fas fa-expand-alt"></i></button>
                     <button class="btn-icon btn-copy" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
                     <button class="btn-icon btn-send send" title="Send to active tab"><i class="fas fa-paper-plane"></i></button>
@@ -219,6 +291,7 @@ const PromptsTab = {
             <p class="prompt-content">${sanitizedContent}</p>
             <div class="prompt-meta">
                 <span>Created: ${formattedDate}</span>
+                ${prompt.pinned ? '<span class="pinned-indicator"><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
             </div>
         `;
 
@@ -230,6 +303,11 @@ const PromptsTab = {
 
         card.querySelector('.btn-send').addEventListener('click', (e) => {
             e.stopPropagation();
+            // Mark this button as active before sending
+            const allSendButtons = document.querySelectorAll('.btn-send');
+            allSendButtons.forEach(btn => btn.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+
             this.sendPromptToActiveTab(prompt);
         });
 
@@ -243,12 +321,105 @@ const PromptsTab = {
             this.showExpandView(prompt);
         });
 
+        card.querySelector('.btn-pin').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.togglePinPrompt(prompt);
+        });
+
         // Make the whole card clickable to view/edit the prompt
         card.addEventListener('click', () => {
             this.showViewEditPromptModal(prompt);
         });
 
         return card;
+    },
+
+    /**
+     * Toggle pin status for a prompt
+     * @param {Object} prompt Prompt to toggle pin status
+     */
+    async togglePinPrompt(prompt) {
+        try {
+            const updatedPrompt = { ...prompt, pinned: !prompt.pinned };
+            const success = await StorageManager.updatePrompt(prompt.id, updatedPrompt);
+
+            if (success) {
+                UIManager.showToast(`Prompt ${updatedPrompt.pinned ? 'pinned' : 'unpinned'} successfully!`, 'success');
+            } else {
+                UIManager.showToast('Failed to update pin status', 'error');
+            }
+        } catch (error) {
+            console.error('Error toggling pin status:', error);
+            UIManager.showToast('Failed to update pin status', 'error');
+        }
+    },
+
+    /**
+     * Toggle pin status for the current prompt in view
+     */
+    async togglePinCurrentPrompt() {
+        const id = this.elements.viewEditModal.dataset.id;
+        if (!id) return;
+
+        try {
+            const prompt = StorageManager.getPromptById(id);
+            if (!prompt) {
+                UIManager.showToast('Prompt not found', 'error');
+                return;
+            }
+
+            const updated = await StorageManager.updatePrompt(id, { pinned: !prompt.pinned });
+            if (updated) {
+                // Update the button icon to reflect the new state
+                if (this.elements.pinFromViewBtn) {
+                    const icon = this.elements.pinFromViewBtn.querySelector('i');
+                    if (icon) {
+                        if (prompt.pinned) {
+                            icon.classList.remove('fa-thumbtack');
+                            icon.classList.add('fa-thumbtack', 'unpinned');
+                            this.elements.pinFromViewBtn.title = 'Pin prompt';
+                        } else {
+                            icon.classList.remove('fa-thumbtack', 'unpinned');
+                            icon.classList.add('fa-thumbtack');
+                            this.elements.pinFromViewBtn.title = 'Unpin prompt';
+                        }
+                    }
+                }
+
+                UIManager.showToast(`Prompt ${prompt.pinned ? 'unpinned' : 'pinned'} successfully!`, 'success');
+            } else {
+                UIManager.showToast('Failed to update pin status', 'error');
+            }
+        } catch (error) {
+            console.error('Error toggling pin status:', error);
+            UIManager.showToast('Failed to update pin status', 'error');
+        }
+    },
+
+    /**
+     * Show the modal for viewing/editing a prompt
+     * @param {Object} prompt Prompt to view/edit
+     */
+    showViewEditPromptModal(prompt) {
+        this.elements.viewEditTitle.textContent = prompt.title;
+        this.elements.viewEditTextarea.value = prompt.content;
+        this.elements.viewEditModal.dataset.id = prompt.id;
+
+        // Update pin button state if it exists
+        if (this.elements.pinFromViewBtn) {
+            const icon = this.elements.pinFromViewBtn.querySelector('i');
+            if (icon) {
+                if (prompt.pinned) {
+                    icon.className = 'fas fa-thumbtack';
+                    this.elements.pinFromViewBtn.title = 'Unpin prompt';
+                } else {
+                    icon.className = 'fas fa-thumbtack unpinned';
+                    this.elements.pinFromViewBtn.title = 'Pin prompt';
+                }
+            }
+        }
+
+        this.elements.viewEditModal.classList.add('active');
     },
 
     /**
@@ -272,7 +443,15 @@ const PromptsTab = {
             return;
         }
 
-        const promptData = { title, content, tags: '' };
+        const promptData = {
+            title,
+            content,
+            tags: '',
+            pinned: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
         try {
             const success = await StorageManager.savePrompt(promptData);
 
@@ -286,17 +465,6 @@ const PromptsTab = {
             console.error('Error creating prompt:', error);
             UIManager.showToast('There was an error saving the prompt.', 'error');
         }
-    },
-
-    /**
-     * Show the modal for viewing/editing a prompt
-     * @param {Object} prompt Prompt to view/edit
-     */
-    showViewEditPromptModal(prompt) {
-        this.elements.viewEditTitle.textContent = prompt.title;
-        this.elements.viewEditTextarea.value = prompt.content;
-        this.elements.viewEditModal.dataset.id = prompt.id;
-        this.elements.viewEditModal.classList.add('active');
     },
 
     /**
@@ -380,6 +548,9 @@ const PromptsTab = {
      * Send current prompt to active tab
      */
     sendCurrentPromptToActiveTab() {
+        // Mark this button as active
+        this.elements.sendFromViewBtn.classList.add('active');
+
         const content = this.elements.viewEditTextarea.value;
         this.sendTextToActiveTab(content);
     },
@@ -419,14 +590,49 @@ const PromptsTab = {
      * @param {string} text Text to send
      */
     sendTextToActiveTab(text) {
-        InjectionManager.injectPrompt(text)
-            .then(() => {
-                UIManager.showToast('Prompt sent to active tab!', 'success');
-            })
-            .catch(error => {
+        // Show button loading state if any send button is active
+        const sendButton = document.querySelector('.btn-send.active, #sendFromViewBtn, #sendExpandBtn');
+        if (sendButton) {
+            const iconElement = sendButton.querySelector('i');
+            const originalClass = iconElement ? iconElement.className : '';
+
+            if (iconElement) {
+                iconElement.className = 'fas fa-spinner fa-spin';
+                sendButton.classList.add('active');
+            }
+
+            InjectionManager.injectPrompt(text)
+                .then(() => {
+                    // Success animation
+                    if (iconElement) {
+                        iconElement.className = 'fas fa-check';
+                        sendButton.classList.add('success');
+
+                        // Revert after timeout
+                        setTimeout(() => {
+                            iconElement.className = originalClass || 'fas fa-paper-plane';
+                            sendButton.classList.remove('success');
+                            sendButton.classList.remove('active');
+                        }, 1500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to send prompt:', error);
+
+                    // Reset button state
+                    if (iconElement) {
+                        iconElement.className = originalClass || 'fas fa-paper-plane';
+                    }
+                    sendButton.classList.remove('active');
+
+                    // Note: We don't show a toast here because InjectionManager already shows error messages
+                });
+        } else {
+            // No active button found, just call injection manager
+            InjectionManager.injectPrompt(text).catch(error => {
                 console.error('Failed to send prompt:', error);
-                UIManager.showToast('Failed to send to active tab.', 'error');
             });
+        }
     },
 
     /**
@@ -446,16 +652,18 @@ const PromptsTab = {
     copyExpandedPromptToClipboard() {
         const content = this.elements.expandViewContent.textContent;
         this.copyTextToClipboard(content);
-        UIManager.showToast('Prompt copied to clipboard!', 'success');
     },
 
     /**
      * Send the expanded prompt content to the active tab
      */
     sendExpandedPromptToActiveTab() {
+        // Mark this button as active
+        this.elements.sendExpandBtn.classList.add('active');
+
         const content = this.elements.expandViewContent.textContent;
         this.sendTextToActiveTab(content);
-        UIManager.showToast('Prompt sent to active tab!', 'success');
+        // Toast is handled by the InjectionManager or sendTextToActiveTab
     },
 
     /**

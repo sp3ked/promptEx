@@ -56,6 +56,14 @@
                     <div class="search-input-wrapper">
                         <input type="text" id="searchInput" placeholder="Search prompts...">
                     </div>
+                    <div class="filter-wrapper">
+                        <select id="sortSelect" class="filter-select">
+                            <option value="recent">Most Recent</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="titleAsc">Title A-Z</option>
+                            <option value="titleDesc">Title Z-A</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="prompts-container" id="promptsContainer">
                     <!-- User's prompts will be dynamically loaded here by JavaScript -->
@@ -164,6 +172,9 @@
                     </button>
                     <button class="btn btn-sm btn-primary" id="sendFromViewBtn" title="Send">
                         <i class="fas fa-paper-plane"></i>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" id="pinFromViewBtn" title="Pin prompt">
+                        <i class="fas fa-thumbtack"></i>
                     </button>
                 </div>
                 <div class="action-group-right">

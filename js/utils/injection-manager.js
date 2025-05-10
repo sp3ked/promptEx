@@ -48,17 +48,17 @@ const InjectionManager = {
                     console.error('Injection failed:', error);
 
                     // Create a more user-friendly error message
-                    let errorMsg = "Prompt injection failed. Make sure you're on a compatible LLM website.";
+                    let errorMsg = "You are not on an LLM website. Please navigate to a supported website to use the prompt injection.";
 
                     if (error.message && error.message.includes("Cannot access")) {
-                        errorMsg = "Cannot access this page. Make sure you're on a compatible LLM website.";
+                        errorMsg = "Cannot access this page. You need to navigate to a supported LLM website to use prompt injection.";
                     } else if (error.message && error.message.includes("Could not establish connection")) {
-                        errorMsg = "Connection failed. Please refresh the page and try again.";
+                        errorMsg = "Connection failed. Please navigate to a supported LLM website and try again.";
                     }
 
                     chrome.runtime.sendMessage({
                         action: "showErrorWithDetails",
-                        message: errorMsg + "<details><summary>Show supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Gemini (gemini.google.com)<br>• Perplexity (perplexity.ai)</details>",
+                        message: errorMsg + "<details><summary>Supported websites</summary>• ChatGPT (chat.openai.com)<br>• Claude (claude.ai)<br>• Grok (grok.x.ai)<br>• Gemini (gemini.google.com)<br>• Perplexity (perplexity.ai)</details>",
                         type: "error"
                     });
 
@@ -137,20 +137,15 @@ function injectPromptAndFileIntoPage(promptData) {
             console.log("Promptr: Text injected successfully.");
             return { success: true };
         } else {
-            throw new Error(`No text input found on this page. Please make sure:
+            throw new Error(`You are not on an LLM website. Please navigate to one of the supported websites:
 <ol>
-<li>You are on a supported LLM website</li>
-<li>The chat interface is fully loaded</li>
-<li>You're not in a special view (like settings)</li>
+<li>ChatGPT (chat.openai.com)</li>
+<li>Claude (claude.ai)</li>
+<li>Grok (grok.x.ai)</li>
+<li>Gemini (gemini.google.com)</li>
+<li>Perplexity (perplexity.ai)</li>
 </ol>
-<details>
-<summary>Supported websites</summary>
-• ChatGPT (chat.openai.com)<br>
-• Claude (claude.ai)<br>
-• Grok (grok.x.ai)<br>
-• Gemini (gemini.google.com)<br>
-• Perplexity (perplexity.ai)
-</details>`);
+<p>The prompt injection only works on these supported websites.</p>`);
         }
     } catch (error) {
         console.error("Promptr: Injection error:", error);
