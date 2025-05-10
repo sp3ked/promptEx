@@ -66,40 +66,24 @@ const PromptsTab = {
      * Bind event listeners
      */
     bindEvents() {
-        // New prompt button from header
-        document.getElementById('newPromptBtn').addEventListener('click', () => this.showNewPromptModal());
-
         // Search input
         this.elements.searchInput.addEventListener('input', () => this.filterPrompts());
 
+        // Sort dropdown
+        this.elements.sortSelect.addEventListener('change', () => this.sortPrompts());
+
         // New prompt modal
+        document.getElementById('newPromptBtn').addEventListener('click', () => this.showNewPromptModal());
         this.elements.closeNewPromptBtn.addEventListener('click', () => this.closeModal(this.elements.newPromptModal));
         this.elements.cancelNewPromptBtn.addEventListener('click', () => this.closeModal(this.elements.newPromptModal));
         this.elements.createNewPromptBtn.addEventListener('click', () => this.createNewPrompt());
 
-        // Sort select
-        if (this.elements.sortSelect) {
-            this.elements.sortSelect.addEventListener('change', () => {
-                this.sortPrompts();
-                this.renderPrompts();
-            });
-        }
-
-        // View/Edit modal
+        // View/edit modal - we'll reattach these dynamically to prevent multiple executions
         this.elements.closeViewEditBtn.addEventListener('click', () => this.closeModal(this.elements.viewEditModal));
-        this.elements.saveFromViewBtn.addEventListener('click', () => this.updatePrompt());
-        this.elements.deleteFromViewBtn.addEventListener('click', () => this.showDeleteConfirmation());
-        this.elements.copyFromViewBtn.addEventListener('click', () => this.copyCurrentPromptToClipboard());
-        this.elements.sendFromViewBtn.addEventListener('click', () => this.sendCurrentPromptToActiveTab());
 
-        // Pin button in view modal
-        if (this.elements.pinFromViewBtn) {
-            this.elements.pinFromViewBtn.addEventListener('click', () => this.togglePinCurrentPrompt());
-        }
-
-        // Delete confirmation modal
-        this.elements.confirmDeleteBtn.addEventListener('click', () => this.deletePrompt());
+        // Delete modal
         this.elements.cancelDeleteBtn.addEventListener('click', () => this.closeModal(this.elements.deleteModal));
+        this.elements.confirmDeleteBtn.addEventListener('click', () => this.deleteCurrentPrompt());
 
         // Expand view modal
         this.elements.closeExpandViewBtn.addEventListener('click', () => this.closeModal(this.elements.expandViewModal));
@@ -122,6 +106,69 @@ const PromptsTab = {
                 this.closeModal(this.elements.expandViewModal);
             }
         });
+    },
+
+    /**
+     * Reattach event listeners for view/edit modal to prevent multiple executions
+     */
+    reattachViewEditModalListeners() {
+        // Clone and replace buttons to remove old event listeners
+        ['saveFromViewBtn', 'deleteFromViewBtn', 'copyFromViewBtn', 'sendFromViewBtn', 'pinFromViewBtn'].forEach(btnId => {
+            if (!this.elements[btnId]) return;
+
+            const original = this.elements[btnId];
+            const clone = original.cloneNode(true);
+            if (original.parentNode) {
+                original.parentNode.replaceChild(clone, original);
+                this.elements[btnId] = clone;
+            }
+        });
+
+        // Re-attach event listeners
+        if (this.elements.saveFromViewBtn) {
+            this.elements.saveFromViewBtn.addEventListener('click', () => this.updatePrompt());
+        }
+
+        if (this.elements.deleteFromViewBtn) {
+            this.elements.deleteFromViewBtn.addEventListener('click', () => this.showDeleteConfirmation());
+        }
+
+        if (this.elements.copyFromViewBtn) {
+            this.elements.copyFromViewBtn.addEventListener('click', () => this.copyPromptToClipboard());
+        }
+
+        if (this.elements.sendFromViewBtn) {
+            this.elements.sendFromViewBtn.addEventListener('click', (e) => {
+                // Prevent multiple sends by disabling button temporarily
+                if (e.currentTarget.disabled) return;
+                e.currentTarget.disabled = true;
+
+                // Add active class and spinner
+                e.currentTarget.classList.add('active');
+                const icon = e.currentTarget.querySelector('i');
+                const originalClass = icon ? icon.className : '';
+                if (icon) icon.className = 'fas fa-spinner fa-spin';
+
+                try {
+                    this.sendPromptToActiveTab();
+                    // Success state is handled by sendPromptToActiveTab
+                } catch (error) {
+                    console.error('Error sending prompt:', error);
+                    if (icon) icon.className = originalClass || 'fas fa-paper-plane';
+                    e.currentTarget.classList.remove('active');
+                    UIManager.showToast('Failed to send prompt', 'error');
+                } finally {
+                    // Re-enable button after a delay
+                    setTimeout(() => {
+                        e.currentTarget.disabled = false;
+                    }, 1500);
+                }
+            });
+        }
+
+        if (this.elements.pinFromViewBtn) {
+            this.elements.pinFromViewBtn.addEventListener('click', () => this.togglePinPrompt());
+        }
     },
 
     /**
@@ -374,48 +421,6 @@ const PromptsTab = {
     },
 
     /**
-     * Toggle pin status for the current prompt in view
-     */
-    async togglePinCurrentPrompt() {
-        const id = this.elements.viewEditModal.dataset.id;
-        if (!id) return;
-
-        try {
-            const prompt = StorageManager.getPromptById(id);
-            if (!prompt) {
-                UIManager.showToast('Prompt not found', 'error');
-                return;
-            }
-
-            const updated = await StorageManager.updatePrompt(id, { pinned: !prompt.pinned });
-            if (updated) {
-                // Update the button icon to reflect the new state
-                if (this.elements.pinFromViewBtn) {
-                    const icon = this.elements.pinFromViewBtn.querySelector('i');
-                    if (icon) {
-                        if (prompt.pinned) {
-                            icon.classList.remove('fa-thumbtack');
-                            icon.classList.add('fa-thumbtack', 'unpinned');
-                            this.elements.pinFromViewBtn.title = 'Pin prompt';
-                        } else {
-                            icon.classList.remove('fa-thumbtack', 'unpinned');
-                            icon.classList.add('fa-thumbtack');
-                            this.elements.pinFromViewBtn.title = 'Unpin prompt';
-                        }
-                    }
-                }
-
-                UIManager.showToast(`Prompt ${prompt.pinned ? 'unpinned' : 'pinned'} successfully!`, 'success');
-            } else {
-                UIManager.showToast('Failed to update pin status', 'error');
-            }
-        } catch (error) {
-            console.error('Error toggling pin status:', error);
-            UIManager.showToast('Failed to update pin status', 'error');
-        }
-    },
-
-    /**
      * Show the modal for viewing/editing a prompt
      * @param {Object} prompt Prompt to view/edit
      */
@@ -437,6 +442,9 @@ const PromptsTab = {
                 }
             }
         }
+
+        // Reattach event listeners to prevent multiple executions
+        this.reattachViewEditModalListeners();
 
         this.elements.viewEditModal.classList.add('active');
     },
@@ -691,5 +699,147 @@ const PromptsTab = {
      */
     closeModal(modal) {
         modal.classList.remove('active');
+    },
+
+    /**
+     * Copy the current prompt to clipboard
+     */
+    copyPromptToClipboard() {
+        const content = this.elements.viewEditTextarea.value;
+        navigator.clipboard.writeText(content)
+            .then(() => {
+                UIManager.showToast('Copied to clipboard!', 'success');
+            })
+            .catch(err => {
+                console.error('Could not copy text:', err);
+                UIManager.showToast('Failed to copy to clipboard', 'error');
+            });
+    },
+
+    /**
+     * Send the current prompt to the active tab
+     */
+    sendPromptToActiveTab() {
+        const content = this.elements.viewEditTextarea.value;
+        if (!content) {
+            UIManager.showToast('No content to send', 'error');
+            return;
+        }
+
+        // Show button loading state if any send button is active
+        const sendButton = document.querySelector('.btn-send.active, #sendFromViewBtn, #sendExpandBtn');
+        if (sendButton) {
+            const iconElement = sendButton.querySelector('i');
+            const originalClass = iconElement ? iconElement.className : '';
+
+            if (iconElement) {
+                iconElement.className = 'fas fa-spinner fa-spin';
+                sendButton.classList.add('active');
+            }
+
+            InjectionManager.injectPrompt(content)
+                .then(() => {
+                    // Success animation
+                    if (iconElement) {
+                        iconElement.className = 'fas fa-check';
+                        sendButton.classList.add('success');
+
+                        // Revert after timeout
+                        setTimeout(() => {
+                            iconElement.className = originalClass || 'fas fa-paper-plane';
+                            sendButton.classList.remove('success');
+                            sendButton.classList.remove('active');
+                        }, 1500);
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to send prompt:', error);
+
+                    // Reset button state
+                    if (iconElement) {
+                        iconElement.className = originalClass || 'fas fa-paper-plane';
+                    }
+                    sendButton.classList.remove('active');
+                });
+        } else {
+            // No active button found, just call injection manager
+            InjectionManager.injectPrompt(content).catch(error => {
+                console.error('Failed to send prompt:', error);
+            });
+        }
+    },
+
+    /**
+     * Toggle pin status for the current prompt in view
+     */
+    togglePinPrompt() {
+        const id = this.elements.viewEditModal.dataset.id;
+        if (!id) return;
+
+        (async () => {
+            try {
+                const prompt = StorageManager.getPromptById(id);
+                if (!prompt) {
+                    UIManager.showToast('Prompt not found', 'error');
+                    return;
+                }
+
+                const updated = await StorageManager.updatePrompt(id, { pinned: !prompt.pinned });
+                if (updated) {
+                    // Update the button icon to reflect the new state
+                    if (this.elements.pinFromViewBtn) {
+                        const icon = this.elements.pinFromViewBtn.querySelector('i');
+                        if (icon) {
+                            if (prompt.pinned) {
+                                icon.classList.remove('fa-thumbtack');
+                                icon.classList.add('fa-thumbtack', 'unpinned');
+                                this.elements.pinFromViewBtn.title = 'Pin prompt';
+                            } else {
+                                icon.classList.remove('fa-thumbtack', 'unpinned');
+                                icon.classList.add('fa-thumbtack');
+                                this.elements.pinFromViewBtn.title = 'Unpin prompt';
+                            }
+                        }
+                    }
+
+                    UIManager.showToast(`Prompt ${prompt.pinned ? 'unpinned' : 'pinned'} successfully!`, 'success');
+
+                    // Refresh prompts list to reflect change
+                    this.loadPrompts();
+                } else {
+                    UIManager.showToast('Failed to update pin status', 'error');
+                }
+            } catch (error) {
+                console.error('Error toggling pin status:', error);
+                UIManager.showToast('Failed to update pin status', 'error');
+            }
+        })();
+    },
+
+    /**
+     * Delete the current prompt
+     */
+    deleteCurrentPrompt() {
+        const id = this.elements.deleteModal.dataset.id;
+        if (!id) {
+            console.error('No prompt ID found for deletion');
+            return;
+        }
+
+        StorageManager.deletePrompt(id)
+            .then(success => {
+                if (success) {
+                    UIManager.showToast('Prompt deleted successfully!', 'success');
+                    this.closeModal(this.elements.deleteModal);
+                    this.closeModal(this.elements.viewEditModal);
+                    this.loadPrompts(); // Refresh the prompts list
+                } else {
+                    UIManager.showToast('Failed to delete prompt', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting prompt:', error);
+                UIManager.showToast('Failed to delete prompt', 'error');
+            });
     }
 }; 
