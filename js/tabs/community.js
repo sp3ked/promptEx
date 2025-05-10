@@ -513,6 +513,76 @@ function createPromptCard(prompt, index, isFeatured = false) {
         </div>
     `;
 
+    // Add direct event listeners to the action buttons (not using event delegation)
+    const copyBtn = promptCard.querySelector('[data-action="copy"]');
+    const sendBtn = promptCard.querySelector('[data-action="send"]');
+    const saveBtn = promptCard.querySelector('[data-action="saveToMyPrompts"]');
+
+    if (copyBtn) {
+        copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(prompt.content);
+            showToast('Prompt copied to clipboard!', 'success');
+        });
+    }
+
+    if (sendBtn) {
+        sendBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            e.currentTarget.classList.add('active');
+
+            // Add spinner icon
+            const icon = e.currentTarget.querySelector('i');
+            const originalClass = icon ? icon.className : '';
+            if (icon) {
+                icon.className = 'fas fa-spinner fa-spin';
+            }
+
+            try {
+                // Use CommunityTab's method if available
+                if (CommunityTab && typeof CommunityTab.sendTextToActiveTab === 'function') {
+                    await CommunityTab.sendTextToActiveTab(prompt.content);
+                } else if (typeof InjectionManager !== 'undefined' && InjectionManager.injectPrompt) {
+                    await InjectionManager.injectPrompt(prompt.content);
+                    // Success animation
+                    if (icon) {
+                        icon.className = 'fas fa-check';
+                        e.currentTarget.classList.add('success');
+                        // Reset after animation
+                        setTimeout(() => {
+                            icon.className = originalClass || 'fas fa-paper-plane';
+                            e.currentTarget.classList.remove('active', 'success');
+                        }, 1500);
+                    }
+                } else {
+                    // Fallback
+                    showToast('Sending to ChatGPT...', 'info');
+                    // Reset after animation
+                    setTimeout(() => {
+                        if (icon) {
+                            icon.className = originalClass || 'fas fa-paper-plane';
+                        }
+                        e.currentTarget.classList.remove('active', 'success');
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('Failed to send prompt:', error);
+                if (icon) {
+                    icon.className = originalClass || 'fas fa-paper-plane';
+                }
+                e.currentTarget.classList.remove('active', 'success');
+                showToast('Failed to send prompt', 'error');
+            }
+        });
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            saveToMyPrompts(prompt.title, prompt.content);
+        });
+    }
+
     // Make the whole card clickable (except buttons)
     promptCard.addEventListener('click', (e) => {
         // Only open the expand view if they didn't click on a button
@@ -701,7 +771,7 @@ function openCommunityViewModal(title, content) {
     const saveToMyPromptsBtn = document.getElementById('saveToMyPromptsBtn');
     const closeViewCommunityPromptBtn = document.getElementById('closeViewCommunityPromptBtn');
 
-    // Remove any existing event listeners
+    // Remove any existing event listeners by cloning and replacing
     const newCopyBtn = copyFromViewPromptBtn.cloneNode(true);
     const newSendBtn = sendFromViewPromptBtn.cloneNode(true);
     const newSaveBtn = saveToMyPromptsBtn.cloneNode(true);
@@ -719,10 +789,43 @@ function openCommunityViewModal(title, content) {
         showToast('Prompt copied to clipboard!', 'success');
     });
 
-    newSendBtn.addEventListener('click', () => {
+    newSendBtn.addEventListener('click', async () => {
         const currentContent = viewCommunityPromptContent.textContent;
-        // Send to ChatGPT logic
-        showToast('Sending to ChatGPT...', 'info');
+        newSendBtn.classList.add('active');
+
+        // Add spinner icon
+        const icon = newSendBtn.querySelector('i');
+        const originalClass = icon ? icon.className : '';
+        if (icon) {
+            icon.className = 'fas fa-spinner fa-spin';
+        }
+
+        try {
+            // Use CommunityTab's method if available
+            if (CommunityTab && typeof CommunityTab.sendTextToActiveTab === 'function') {
+                await CommunityTab.sendTextToActiveTab(currentContent);
+            } else if (typeof InjectionManager !== 'undefined' && InjectionManager.injectPrompt) {
+                await InjectionManager.injectPrompt(currentContent);
+                // Success animation shown by InjectionManager
+            } else {
+                // Fallback
+                showToast('Sending to ChatGPT...', 'info');
+                // Reset after animation
+                setTimeout(() => {
+                    if (icon) {
+                        icon.className = originalClass || 'fas fa-paper-plane';
+                    }
+                    newSendBtn.classList.remove('active');
+                }, 1500);
+            }
+        } catch (error) {
+            console.error('Failed to send prompt:', error);
+            if (icon) {
+                icon.className = originalClass || 'fas fa-paper-plane';
+            }
+            newSendBtn.classList.remove('active');
+            showToast('Failed to send prompt', 'error');
+        }
     });
 
     newSaveBtn.addEventListener('click', () => {
@@ -784,14 +887,10 @@ const CommunityTab = {
         this.elements.filterSelect.addEventListener('change', () => this.filterAndSortPrompts());
         this.elements.sortSelect.addEventListener('change', () => this.filterAndSortPrompts());
 
-        // Community Prompt Modal events
-        this.elements.closeViewCommunityPromptBtn.addEventListener('click', () => this.closeViewCommunityModal());
-        this.elements.saveToMyPromptsBtn.addEventListener('click', () => this.saveToMyPrompts());
-        this.elements.copyFromViewPromptBtn.addEventListener('click', () => this.copyPromptToClipboard());
-        this.elements.sendFromViewPromptBtn.addEventListener('click', () => {
-            this.elements.sendFromViewPromptBtn.classList.add('active');
-            this.sendPromptToActiveTab();
-        });
+        // Community Prompt Modal events - now handled by reattachViewModalEventListeners()
+        // We'll do initial binding but the actual event handlers will be refreshed each time
+        // the modal is opened to prevent duplicate handlers
+        this.reattachViewModalEventListeners();
     },
 
     /**
@@ -1011,6 +1110,55 @@ const CommunityTab = {
 
         // Show modal
         this.elements.viewCommunityPromptModal.classList.add('active');
+
+        // Remove and re-attach event listeners to prevent multiple executions
+        this.reattachViewModalEventListeners();
+    },
+
+    /**
+     * Re-attach event listeners to view modal buttons to prevent multiple executions
+     */
+    reattachViewModalEventListeners() {
+        // Clone and replace buttons to remove old event listeners
+        ['copyFromViewPromptBtn', 'sendFromViewPromptBtn', 'saveToMyPromptsBtn', 'closeViewCommunityPromptBtn'].forEach(btnId => {
+            if (!this.elements[btnId]) return;
+
+            const original = this.elements[btnId];
+            const clone = original.cloneNode(true);
+            original.parentNode.replaceChild(clone, original);
+            this.elements[btnId] = clone;
+        });
+
+        // Re-attach event listeners
+        this.elements.closeViewCommunityPromptBtn.addEventListener('click', () => this.closeViewCommunityModal());
+        this.elements.saveToMyPromptsBtn.addEventListener('click', () => this.saveToMyPrompts());
+        this.elements.copyFromViewPromptBtn.addEventListener('click', () => this.copyPromptToClipboard());
+        this.elements.sendFromViewPromptBtn.addEventListener('click', async (e) => {
+            // Prevent multiple sends by disabling button temporarily
+            if (e.currentTarget.disabled) return;
+            e.currentTarget.disabled = true;
+
+            // Add active class and spinner
+            e.currentTarget.classList.add('active');
+            const icon = e.currentTarget.querySelector('i');
+            const originalClass = icon ? icon.className : '';
+            if (icon) icon.className = 'fas fa-spinner fa-spin';
+
+            try {
+                await this.sendPromptToActiveTab();
+                // Success state handled by sendPromptToActiveTab
+            } catch (error) {
+                console.error('Error sending prompt:', error);
+                if (icon) icon.className = originalClass || 'fas fa-paper-plane';
+                e.currentTarget.classList.remove('active');
+                UIManager.showToast('Failed to send prompt', 'error');
+            } finally {
+                // Re-enable button after a delay
+                setTimeout(() => {
+                    e.currentTarget.disabled = false;
+                }, 1500);
+            }
+        });
     },
 
     /**
@@ -1058,41 +1206,65 @@ const CommunityTab = {
 
             console.log('Attempting to save prompt:', newPrompt);
 
-            // Save using StorageManager - use await to ensure it completes before continuing
-            const success = await StorageManager.savePrompt(newPrompt);
+            // Use the localStorage approach directly for now as a fallback
+            try {
+                // First try with StorageManager if available
+                let success = false;
 
-            if (success) {
-                // Update usage count
-                const promptIndex = this.communityPrompts.findIndex(p => p.id === promptId);
-                if (promptIndex !== -1) {
-                    this.communityPrompts[promptIndex].usageCount++;
-                }
-
-                // Close modal
-                this.closeViewCommunityModal();
-
-                // Show success message
-                UIManager.showToast('Prompt saved to your collection', 'success');
-
-                // Force immediate refresh of the prompts tab
-                if (window.PromptsTab && typeof window.PromptsTab.loadPrompts === 'function') {
-                    // Use setTimeout with 0ms to put this at the end of the event queue
-                    // This ensures DOM updates have time to complete
-                    setTimeout(() => {
-                        window.PromptsTab.loadPrompts();
-                        console.log('Forced prompts tab refresh');
-
-                        // Check if we need to notify the user about the new prompt
-                        const currentTab = document.querySelector('.tab.active').getAttribute('data-tab');
-                        if (currentTab !== 'prompts') {
-                            UIManager.showToast('New prompt saved to My Prompts tab', 'info');
-                        }
-                    }, 0);
+                if (typeof StorageManager !== 'undefined' && StorageManager.savePrompt) {
+                    success = await StorageManager.savePrompt(newPrompt);
                 } else {
-                    console.warn('PromptsTab not available for refresh');
+                    // Fallback to direct localStorage approach
+                    const userPrompts = JSON.parse(localStorage.getItem('promptr_prompts') || '[]');
+
+                    // Check if prompt already exists
+                    const promptExists = userPrompts.some(prompt =>
+                        prompt.title === newPrompt.title || prompt.content === newPrompt.content
+                    );
+
+                    if (!promptExists) {
+                        // Add unique ID
+                        newPrompt.id = crypto.randomUUID ? crypto.randomUUID() :
+                            `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                        userPrompts.push(newPrompt);
+                        localStorage.setItem('promptr_prompts', JSON.stringify(userPrompts));
+                        success = true;
+                    }
                 }
-            } else {
-                UIManager.showToast('Prompt already exists in your collection', 'info');
+
+                if (success) {
+                    // Update usage count
+                    const promptIndex = this.communityPrompts.findIndex(p => p.id === promptId);
+                    if (promptIndex !== -1) {
+                        this.communityPrompts[promptIndex].usageCount++;
+                    }
+
+                    // Close modal
+                    this.closeViewCommunityModal();
+
+                    // Show success message
+                    UIManager.showToast('Prompt saved to your collection', 'success');
+
+                    // Force immediate refresh of the prompts tab
+                    if (window.PromptsTab && typeof window.PromptsTab.loadPrompts === 'function') {
+                        setTimeout(() => {
+                            window.PromptsTab.loadPrompts();
+                            console.log('Forced prompts tab refresh');
+
+                            // Check if we need to notify the user about the new prompt
+                            const currentTab = document.querySelector('.tab.active').getAttribute('data-tab');
+                            if (currentTab !== 'prompts') {
+                                UIManager.showToast('New prompt saved to My Prompts tab', 'info');
+                            }
+                        }, 0);
+                    }
+                } else {
+                    UIManager.showToast('Prompt already exists in your collection', 'info');
+                }
+            } catch (error) {
+                console.error('Error saving prompt:', error);
+                UIManager.showToast('Failed to save prompt', 'error');
             }
         } catch (error) {
             console.error('Error saving prompt:', error);
@@ -1111,9 +1283,9 @@ const CommunityTab = {
     /**
      * Send prompt from the view modal to active tab
      */
-    sendPromptToActiveTab(prompt) {
+    async sendPromptToActiveTab(prompt) {
         const content = prompt ? (typeof prompt === 'object' ? prompt.content : prompt) : this.elements.viewCommunityPromptContent.textContent;
-        this.sendTextToActiveTab(content);
+        await this.sendTextToActiveTab(content);
     },
 
     /**
@@ -1169,58 +1341,141 @@ const CommunityTab = {
      * Send text to active tab
      * @param {string} text Text to send
      */
-    sendTextToActiveTab(text) {
+    async sendTextToActiveTab(text) {
         if (!text) {
             UIManager.showToast('No content to send', 'error');
             return;
         }
 
         // Show button loading state
-        const sendButton = document.querySelector('.btn-send.active');
+        const sendButton = document.querySelector('.btn-send.active, #sendFromViewPromptBtn');
         if (sendButton) {
             const iconElement = sendButton.querySelector('i');
-            const originalClass = iconElement ? icon.className : '';
+            const originalClass = iconElement ? iconElement.className : '';
 
             if (iconElement) {
                 iconElement.className = 'fas fa-spinner fa-spin';
             }
 
-            // Use setTimeout to allow UI to update before potentially freezing
-            setTimeout(async () => {
-                try {
-                    // Use the InjectionManager instead of message passing
+            try {
+                // Use the global InjectionManager if available, otherwise show a fallback message
+                if (typeof InjectionManager !== 'undefined' && InjectionManager.injectPrompt) {
                     await InjectionManager.injectPrompt(text);
-
-                    // Success animation
-                    if (iconElement) {
-                        iconElement.className = 'fas fa-check';
-                        sendButton.classList.add('success');
-
-                        // Revert after timeout
-                        setTimeout(() => {
-                            iconElement.className = originalClass || 'fas fa-paper-plane';
-                            sendButton.classList.remove('success');
-                            sendButton.classList.remove('active');
-                        }, 1500);
-                    }
-                } catch (error) {
-                    console.error('Failed to inject prompt:', error);
-
-                    // Revert button state
-                    if (iconElement) {
-                        iconElement.className = originalClass || 'fas fa-paper-plane';
-                    }
-                    if (sendButton) {
-                        sendButton.classList.remove('active');
-                    }
+                } else {
+                    // Fallback to direct method if InjectionManager isn't available
+                    await this.fallbackInjectPrompt(text);
                 }
-            }, 0);
-        } else {
-            // If no button is marked as active, just call the injection manager directly
-            InjectionManager.injectPrompt(text).catch(error => {
+
+                // Success animation
+                if (iconElement) {
+                    iconElement.className = 'fas fa-check';
+                    sendButton.classList.add('success');
+
+                    // Revert after timeout
+                    setTimeout(() => {
+                        iconElement.className = originalClass || 'fas fa-paper-plane';
+                        sendButton.classList.remove('success', 'active');
+                    }, 1500);
+                }
+            } catch (error) {
                 console.error('Failed to inject prompt:', error);
-            });
+                // Revert button state
+                if (iconElement) {
+                    iconElement.className = originalClass || 'fas fa-paper-plane';
+                }
+                sendButton.classList.remove('active');
+                UIManager.showToast('Failed to send prompt. Make sure you are on a supported website (ChatGPT, Claude, etc.)', 'error');
+            }
+        } else {
+            // If no button is marked as active, just try to send
+            try {
+                if (typeof InjectionManager !== 'undefined' && InjectionManager.injectPrompt) {
+                    await InjectionManager.injectPrompt(text);
+                } else {
+                    await this.fallbackInjectPrompt(text);
+                }
+            } catch (error) {
+                console.error('Failed to inject prompt:', error);
+                UIManager.showToast('Failed to send prompt. Make sure you are on a supported website (ChatGPT, Claude, etc.)', 'error');
+            }
         }
+    },
+
+    /**
+     * Fallback method to inject prompts if InjectionManager is not available
+     * @param {string} text Text to inject
+     */
+    async fallbackInjectPrompt(text) {
+        return new Promise((resolve, reject) => {
+            try {
+                // Try to use chrome API directly
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (!tabs || !tabs[0] || !tabs[0].id) {
+                        reject(new Error('No active tab found.'));
+                        return;
+                    }
+
+                    chrome.scripting.executeScript({
+                        target: { tabId: tabs[0].id },
+                        func: (textToInject) => {
+                            // This function runs in the context of the web page
+                            function simulateInput(element, text) {
+                                element.focus();
+                                if (element.isContentEditable) {
+                                    document.execCommand('insertText', false, text || '');
+                                } else {
+                                    element.value = text || '';
+                                }
+                                element.dispatchEvent(new Event('input', { bubbles: true }));
+                                element.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+
+                            const selectors = [
+                                'div.ProseMirror[contenteditable="true"][translate="no"]#prompt-textarea', // ChatGPT
+                                '.ProseMirror[contenteditable="true"][translate="no"]', // Claude
+                                'div[contenteditable="true"][aria-label="Write your prompt to Claude"]', // Claude alt
+                                'div.ProseMirror.break-words', // Claude fallback
+                                'textarea[data-testid="tweetTextarea_0"]', // Grok
+                                'textarea[placeholder*="message"]', // Generic fallback
+                                'div[role="textbox"]', // Broad fallback
+                                'div.relative.flex.w-full.grow.flex-col', // Gemini
+                                'div[contenteditable="true"][role="textbox"]' // More general fallback
+                            ];
+
+                            let targetTextArea;
+                            for (const selector of selectors) {
+                                targetTextArea = document.querySelector(selector);
+                                if (targetTextArea) break;
+                            }
+
+                            if (targetTextArea) {
+                                simulateInput(targetTextArea, textToInject);
+                                return { success: true };
+                            } else {
+                                throw new Error("No LLM text input found");
+                            }
+                        },
+                        args: [text],
+                        world: 'MAIN'
+                    }, (results) => {
+                        if (chrome.runtime.lastError) {
+                            reject(new Error(chrome.runtime.lastError.message));
+                            return;
+                        }
+
+                        if (results && results[0] && results[0].result && results[0].result.success) {
+                            UIManager.showToast('Prompt sent successfully!', 'success');
+                            resolve();
+                        } else {
+                            reject(new Error('Failed to send prompt.'));
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Fallback injection failed:', error);
+                reject(error);
+            }
+        });
     }
 };
 
