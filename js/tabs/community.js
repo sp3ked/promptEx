@@ -51,7 +51,10 @@ const CommunityTab = {
         this.elements.closeViewCommunityPromptBtn.addEventListener('click', () => this.closeViewCommunityModal());
         this.elements.saveToMyPromptsBtn.addEventListener('click', () => this.saveToMyPrompts());
         this.elements.copyFromViewPromptBtn.addEventListener('click', () => this.copyPromptToClipboard());
-        this.elements.sendFromViewPromptBtn.addEventListener('click', () => this.sendPromptToActiveTab());
+        this.elements.sendFromViewPromptBtn.addEventListener('click', () => {
+            this.elements.sendFromViewPromptBtn.classList.add('active');
+            this.sendPromptToActiveTab();
+        });
     },
 
     /**
@@ -233,6 +236,11 @@ const CommunityTab = {
 
         card.querySelector('.btn-send').addEventListener('click', (e) => {
             e.stopPropagation();
+            // Mark this button as active before sending
+            const allSendButtons = document.querySelectorAll('.btn-send');
+            allSendButtons.forEach(btn => btn.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+
             this.sendPromptToActiveTab(prompt);
         });
 
@@ -431,26 +439,57 @@ const CommunityTab = {
      * @param {string} text Text to send
      */
     sendTextToActiveTab(text) {
-        if (!text) return;
+        if (!text) {
+            UIManager.showToast('No content to send', 'error');
+            return;
+        }
 
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs && tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    action: 'sendPrompt',
-                    prompt: text
-                }, (response) => {
-                    if (chrome.runtime.lastError) {
-                        UIManager.showToast('Could not send to tab. Try refreshing the page.', 'error');
-                    } else if (response && response.success) {
-                        UIManager.showToast('Prompt sent to active tab!', 'success');
-                    } else {
-                        UIManager.showToast('Failed to send prompt', 'error');
-                    }
-                });
-            } else {
-                UIManager.showToast('No active tab found', 'error');
+        // Show button loading state
+        const sendButton = document.querySelector('.btn-send.active');
+        if (sendButton) {
+            const iconElement = sendButton.querySelector('i');
+            const originalClass = iconElement ? iconElement.className : '';
+
+            if (iconElement) {
+                iconElement.className = 'fas fa-spinner fa-spin';
             }
-        });
+
+            // Use setTimeout to allow UI to update before potentially freezing
+            setTimeout(async () => {
+                try {
+                    // Use the InjectionManager instead of message passing
+                    await InjectionManager.injectPrompt(text);
+
+                    // Success animation
+                    if (iconElement) {
+                        iconElement.className = 'fas fa-check';
+                        sendButton.classList.add('success');
+
+                        // Revert after timeout
+                        setTimeout(() => {
+                            iconElement.className = originalClass || 'fas fa-paper-plane';
+                            sendButton.classList.remove('success');
+                            sendButton.classList.remove('active');
+                        }, 1500);
+                    }
+                } catch (error) {
+                    console.error('Failed to inject prompt:', error);
+
+                    // Revert button state
+                    if (iconElement) {
+                        iconElement.className = originalClass || 'fas fa-paper-plane';
+                    }
+                    if (sendButton) {
+                        sendButton.classList.remove('active');
+                    }
+                }
+            }, 0);
+        } else {
+            // If no button is marked as active, just call the injection manager directly
+            InjectionManager.injectPrompt(text).catch(error => {
+                console.error('Failed to inject prompt:', error);
+            });
+        }
     }
 };
 

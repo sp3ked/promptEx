@@ -174,7 +174,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background-color: #1E2736;
+    background-color: #161c27;
     position: relative;
     min-height: 0;
 }
@@ -186,7 +186,7 @@
     flex: 1;
     position: relative;
     z-index: 1;
-    background-color: #1E2736;
+    background-color: #161c25;
     min-height: 0;
     overflow: hidden;
 }
@@ -197,19 +197,10 @@
 }
 
 /* Apply grid background to each tab content */
+/* Removing grid background as requested */
 .tab-content::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image:
-        linear-gradient(rgba(0, 0, 0, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.15) 1px, transparent 1px);
-    background-size: 24px 24px;
-    pointer-events: none;
-    z-index: 0;
+    display: none;
+    /* Hide the grid background */
 }
 
 /* Search container styles */

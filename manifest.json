@@ -11,6 +11,7 @@
     ],
     "host_permissions": [
         "*://chatgpt.com/*",
+        "*://chat.openai.com/*",
         "*://claude.ai/*",
         "*://grok.x.ai/*",
         "*://chat.deepseek.com/*",
