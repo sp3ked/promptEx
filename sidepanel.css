@@ -217,8 +217,10 @@ body {
 /* Search container - Perfectly aligned */
 .search-sort-container {
     display: flex;
-    justify-content: space-between;
-    align-items: stretch;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
     padding: 16px;
     background: #161c25;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -226,15 +228,11 @@ body {
     top: 0;
     z-index: 5;
     flex-shrink: 0;
-    gap: 12px;
 }
 
 .search-input-wrapper {
-    position: relative;
     flex: 1;
-    max-width: 100%;
-    display: flex;
-    align-items: center;
+    min-width: 150px;
 }
 
 /* Search input and dropdown with same height */
@@ -621,4 +619,324 @@ body {
 /* Ensure proper scrolling */
 * {
     box-sizing: border-box;
+}
+
+/* Featured Prompts Section */
+.featured-prompts-section {
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: #0EA5E9;
+    font-weight: 600;
+    padding-left: 0.5rem;
+    border-left: 3px solid #0EA5E9;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title i {
+    color: #ffcc00;
+}
+
+.featured-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.prompt-card.featured {
+    border: 1px solid #ffcc00;
+    box-shadow: 0 2px 8px rgba(255, 204, 0, 0.2);
+    background-color: rgba(255, 204, 0, 0.05);
+}
+
+.featured-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    color: #ffcc00;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    background-color: rgba(255, 204, 0, 0.1);
+}
+
+.section-divider {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.05);
+    margin: 1rem 0;
+}
+
+/* Prompt Stats */
+.prompt-stats {
+    display: flex;
+    gap: 0.75rem;
+    color: #64748b;
+    font-size: 0.7rem;
+    margin-left: auto;
+}
+
+.prompt-stats i {
+    margin-right: 0.25rem;
+}
+
+.prompt-stats i.fa-star {
+    color: #ffcc00;
+}
+
+.prompt-stats i.fa-users {
+    color: #0EA5E9;
+}
+
+/* Adjust filter wrapper for multiple selects */
+.filter-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+/* Make sure each select takes only the space it needs */
+.filter-select {
+    flex: 1;
+    min-width: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0 16px;
+    height: 40px;
+    color: #e2e8f0;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%2364748b' d='M4.427 6.427l3.573 3.573 3.573-3.573L12 7l-4 4-4-4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #0EA5E9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+/* Fix for action buttons */
+.prompt-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 2px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+/* Make sure buttons are properly styled */
+.btn-icon,
+button[data-action] {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.btn-icon:hover,
+button[data-action]:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+
+/* Copy button hover effect */
+button[data-action="copy"]:hover {
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+/* Send button hover effect */
+button[data-action="send"]:hover {
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+/* Save button hover effect */
+button[data-action="saveToMyPrompts"]:hover {
+    color: #0EA5E9;
+    background: rgba(14, 165, 233, 0.1);
+}
+
+/* View button hover effect */
+button[data-action="expandView"]:hover {
+    color: #eab308;
+    background: rgba(234, 179, 8, 0.1);
+}
+
+/* Prompt card preview alignment */
+.prompt-preview {
+    padding: 0 14px;
+    margin-top: -8px;
+}
+
+/* Fix for prompt title spacing */
+.prompt-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 14px 10px 14px;
+    margin: 0;
+    gap: 12px;
+    color: #0EA5E9;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.prompt-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .search-sort-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-wrapper {
+        flex-direction: row;
+    }
+
+    .featured-prompts {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* All prompts section */
+.all-prompts-section {
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
+}
+
+.all-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Fix button event handling */
+.prompt-card {
+    cursor: default;
+}
+
+/* Add padding to the community prompt container */
+#communityPromptContainer {
+    padding-top: 0.5rem;
+}
+
+/* Make sorting options more compact */
+#communityFilter,
+#communitySortSelect {
+    font-size: 0.9rem;
+}
+
+/* Make the search bar match the screenshot */
+#communitySearchInput {
+    background-color: #1e293b;
+    border-color: #1e293b;
+    color: #e2e8f0;
+}
+
+#communitySearchInput::placeholder {
+    color: #64748b;
+}
+
+/* Add spacing between cards and improve card appearance */
+.prompt-card {
+    transition: all 0.2s ease;
+    background-color: #1a2234;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.prompt-card:hover {
+    border-color: rgba(14, 165, 233, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Make category badge more prominent */
+.prompt-category {
+    background-color: rgba(14, 165, 233, 0.1);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    color: #0EA5E9;
+}
+
+/* Community prompt modal styles */
+.view-community-modal {
+    padding: 1rem;
+    max-width: 90vw;
+    width: 500px;
+}
+
+.prompt-view-container {
+    padding: 10px 0 20px;
+}
+
+.prompt-view-content {
+    max-height: 50vh;
+    overflow-y: auto;
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.prompt-view-content[contenteditable="true"] {
+    padding: 10px !important;
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 6px !important;
+    min-height: 100px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.prompt-view-content[contenteditable="true"]:focus {
+    border-color: rgba(14, 165, 233, 0.4);
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.1);
+}
+
+.prompt-view-meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* Make the entire prompt card clickable */
+.prompt-card {
+    cursor: pointer;
+}
+
+/* But keep button areas with default cursor */
+.prompt-card .btn-icon,
+.prompt-card .prompt-actions {
+    cursor: default;
+}
+
+/* Make clear the card is clickable with a subtle hover effect */
+.prompt-card:hover .prompt-content {
+    color: #fff;
 }

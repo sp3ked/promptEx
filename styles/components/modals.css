@@ -170,50 +170,53 @@
 
 /* FAQ Modal */
 .faq-content {
+    padding: 16px 0;
     max-height: 60vh;
     overflow-y: auto;
-    padding-right: 8px;
 }
 
 .faq-item {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.faq-item:last-child {
+    margin-bottom: 0;
 }
 
 .faq-item h4 {
     color: var(--neon-cyan);
-    margin-bottom: 10px;
-    font-size: 1rem;
+    margin-bottom: 8px;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .faq-item p {
+    color: var(--text-light);
+    font-size: 14px;
+    line-height: 1.5;
     margin: 0;
-    line-height: 1.6;
 }
 
-/* Custom scrollbar for modals */
-.modal-content::-webkit-scrollbar,
-.faq-content::-webkit-scrollbar,
-.prompt-textarea::-webkit-scrollbar {
-    width: 8px;
+/* Modal scrollbar styles */
+.faq-content::-webkit-scrollbar {
+    width: 4px;
 }
 
-.modal-content::-webkit-scrollbar-track,
-.faq-content::-webkit-scrollbar-track,
-.prompt-textarea::-webkit-scrollbar-track {
+.faq-content::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.2);
     border-radius: 4px;
 }
 
-.modal-content::-webkit-scrollbar-thumb,
-.faq-content::-webkit-scrollbar-thumb,
-.prompt-textarea::-webkit-scrollbar-thumb {
+.faq-content::-webkit-scrollbar-thumb {
     background: rgba(0, 212, 255, 0.5);
     border-radius: 4px;
 }
 
-.modal-content::-webkit-scrollbar-thumb:hover,
-.faq-content::-webkit-scrollbar-thumb:hover,
-.prompt-textarea::-webkit-scrollbar-thumb:hover {
+.faq-content::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 212, 255, 0.7);
 }
 

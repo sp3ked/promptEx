@@ -79,10 +79,20 @@
                     <div class="filter-wrapper">
                         <select id="communityFilter" class="filter-select">
                             <option value="all">All Categories</option>
-                            <option value="coding">Coding</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="business">Business</option>
+                            <option value="content">Content</option>
                             <option value="writing">Writing</option>
+                            <option value="webdevelopment">Web Development</option>
+                            <option value="education">Education</option>
+                            <option value="sales">Sales</option>
                             <option value="creative">Creative</option>
                             <option value="productivity">Productivity</option>
+                        </select>
+                        <select id="communitySortSelect" class="filter-select">
+                            <option value="popular">Most Popular</option>
+                            <option value="recent">Most Recent</option>
+                            <option value="alphabetical">A-Z</option>
                         </select>
                     </div>
                 </div>
@@ -169,27 +179,24 @@
                     <button class="btn btn-sm btn-delete" id="deleteFromViewBtn" title="Delete">
                         <i class="fas fa-trash"></i>
                     </button>
-                    <button class="btn btn-sm btn-tertiary" id="copyFromViewBtn" title="Copy">
+                    <button class="btn btn-sm btn-outline-grey" id="copyFromViewBtn" title="Copy">
                         <i class="fas fa-copy"></i>
                     </button>
                     <button class="btn btn-sm btn-primary" id="sendFromViewBtn" title="Send">
                         <i class="fas fa-paper-plane"></i>
                     </button>
-                    <button class="btn btn-sm btn-secondary" id="pinFromViewBtn" title="Pin prompt">
-                        <i class="fas fa-thumbtack"></i>
+                    <button class="btn btn-sm btn-secondary wide-button" id="saveFromViewBtn">
+                        <i class="fas fa-save"></i> Save
                     </button>
                 </div>
                 <div class="action-group-right">
-                    <button class="btn btn-secondary" id="saveFromViewBtn">
-                        <i class="fas fa-save"></i> Save
-                    </button>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="modal" id="newPromptModal">
-        <div class="modal-content">
+        <div class="modal-content new-prompt-modal">
             <div class="modal-header">
                 <h3>Create New Prompt</h3>
                 <button class="btn-icon" id="closeNewPromptBtn" title="Close">
@@ -201,25 +208,65 @@
                 <input type="text" id="newPromptTitle" class="prompt-input"
                     placeholder="Enter a title for your prompt...">
             </div>
-            <div class="input-group">
+            <div class="input-group full-height">
                 <label for="newPromptTextarea">Content</label>
                 <textarea class="prompt-textarea" id="newPromptTextarea"
                     placeholder="Enter your prompt here..."></textarea>
             </div>
             <div class="modal-actions">
                 <div class="action-group-left">
-                    <button class="btn btn-sm btn-tertiary" id="cancelNewPromptBtn">
-                        <i class="fas fa-times"></i>
-                    </button>
                 </div>
                 <div class="action-group-right">
-                    <button class="btn btn-secondary" id="createNewPromptBtn">
+                    <button class="btn btn-secondary" id="cancelNewPromptBtn">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" id="createNewPromptBtn">
                         <i class="fas fa-plus"></i> Create
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Add styles for the new prompt modal -->
+    <style>
+        .new-prompt-modal {
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .new-prompt-modal .input-group.full-height {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+        }
+
+        .new-prompt-modal .prompt-textarea {
+            flex: 1;
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .new-prompt-modal .modal-actions {
+            margin-top: 15px;
+        }
+
+        .btn-outline-grey {
+            border: 1px solid #888;
+            background-color: transparent;
+            color: #888;
+        }
+
+        .btn-outline-grey:hover {
+            background-color: rgba(136, 136, 136, 0.1);
+        }
+
+        .wide-button {
+            min-width: calc(2 * 36px + 8px);
+        }
+    </style>
 
     <!-- View Community Prompt Modal -->
     <div class="modal" id="viewCommunityPromptModal">
@@ -255,41 +302,39 @@
     </div>
 
     <!-- FAQ Modal -->
-    <div class="modal" id="faqModal">
+    <div id="faqModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Frequently Asked Questions</h3>
-                <div class="modal-actions">
-                    <button class="btn btn-icon" id="closeFaqBtn" title="Close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+                <button id="closeFaqBtn" class="btn-icon">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
             <div class="faq-content">
                 <div class="faq-item">
-                    <h4>What is Promptr?</h4>
-                    <p>Promptr is a prompt management tool that helps you save, organize, and reuse prompts for AI chat
-                        platforms like ChatGPT, Claude, and Grok.</p>
+                    <h4>What is PromptEx?</h4>
+                    <p>PromptEx is a Chrome extension that helps you manage and use AI prompts efficiently with ChatGPT.
+                        It allows you to save, organize, and quickly access your favorite prompts.</p>
                 </div>
                 <div class="faq-item">
-                    <h4>How do I edit a prompt?</h4>
-                    <p>Click on any prompt card TITLE to open the edit view, make your changes, and click "Save
-                        Changes".</p>
+                    <h4>How do I save a prompt?</h4>
+                    <p>You can save prompts by clicking the "+" button in the My Prompts tab or by using the "Save"
+                        button when viewing community prompts.</p>
                 </div>
                 <div class="faq-item">
-                    <h4>How do I use Promptr?</h4>
-                    <p>Create prompts using the "New Prompt" button, then use the "Send" button to inject them into
-                        supported AI chat interfaces or copy them to your clipboard.</p>
+                    <h4>Can I edit my saved prompts?</h4>
+                    <p>Yes! Click on any prompt in your My Prompts tab to view and edit its details, including the
+                        title, content, and category.</p>
                 </div>
                 <div class="faq-item">
-                    <h4>Which platforms are supported?</h4>
-                    <p>Promptr currently supports ChatGPT, Claude, Grok, and Gemini. More platforms will
-                        be added in future updates.</p>
+                    <h4>How do I use the Community prompts?</h4>
+                    <p>Browse the Community tab to discover prompts shared by other users. You can filter by category,
+                        search for specific topics, and save any prompt to your personal collection.</p>
                 </div>
                 <div class="faq-item">
-                    <h4>Where are my prompts stored?</h4>
-                    <p>Your prompts are stored locally in your browser's storage. They do not sync across devices yet,
-                        but this feature is coming soon.</p>
+                    <h4>How does Auto-save work?</h4>
+                    <p>When Auto-save is enabled, any changes you make to your prompts will be saved automatically. You
+                        can toggle this feature in the Settings tab.</p>
                 </div>
             </div>
         </div>
@@ -343,18 +388,17 @@
                         <h3 class="settings-section-title">Appearance</h3>
                         <div class="option">
                             <label for="themeSelect">Theme</label>
-                            <select id="themeSelect" class="form-control">
-                                <option value="light">Light</option>
+                            <select id="themeSelect" class="form-control" disabled>
                                 <option value="dark">Dark</option>
                             </select>
+                            <span class="setting-note">Dark theme is currently the only option</span>
                         </div>
                         <div class="option">
                             <label for="fontSizeSelect">Font Size</label>
-                            <select id="fontSizeSelect" class="form-control">
-                                <option value="14">Small</option>
+                            <select id="fontSizeSelect" class="form-control" disabled>
                                 <option value="16">Medium</option>
-                                <option value="18">Large</option>
                             </select>
+                            <span class="setting-note">Font size is currently locked</span>
                         </div>
                     </div>
 

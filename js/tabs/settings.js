@@ -22,6 +22,9 @@ const SettingsTab = {
         this.autoSaveToggle = document.getElementById('autoSaveToggle');
         this.saveSettingsBtn = document.getElementById('saveSettingsBtn');
         this.resetSettingsBtn = document.getElementById('resetSettingsBtn');
+        this.faqBtn = document.getElementById('faqBtn');
+        this.faqModal = document.getElementById('faqModal');
+        this.closeFaqBtn = document.getElementById('closeFaqBtn');
     },
 
     /**
@@ -31,34 +34,25 @@ const SettingsTab = {
         this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
         this.resetSettingsBtn.addEventListener('click', () => this.resetSettings());
 
-        // Live theme preview
-        this.themeSelect.addEventListener('change', () => {
-            document.documentElement.setAttribute('data-theme', this.themeSelect.value);
+        // FAQ modal events
+        this.faqBtn.addEventListener('click', () => {
+            this.faqModal.classList.add('show');
         });
 
-        // Live font size preview
-        this.fontSizeSelect.addEventListener('change', () => {
-            document.documentElement.style.fontSize = this.fontSizeSelect.value + 'px';
+        this.closeFaqBtn.addEventListener('click', () => {
+            this.faqModal.classList.remove('show');
         });
 
-        // FAQ button
-        document.getElementById('faqBtn').addEventListener('click', () => {
-            document.getElementById('faqModal').classList.add('show');
+        // Close FAQ modal when clicking outside
+        this.faqModal.addEventListener('click', (e) => {
+            if (e.target === this.faqModal) {
+                this.faqModal.classList.remove('show');
+            }
         });
 
-        // Close FAQ modal
-        document.getElementById('closeFaqBtn').addEventListener('click', () => {
-            document.getElementById('faqModal').classList.remove('show');
-        });
-
-        // Account button
-        document.getElementById('accountBtn').addEventListener('click', () => {
-            document.getElementById('accountModal').classList.add('show');
-        });
-
-        // Close account modal
-        document.getElementById('closeAccountBtn').addEventListener('click', () => {
-            document.getElementById('accountModal').classList.remove('show');
+        // Auto-save toggle
+        this.autoSaveToggle.addEventListener('change', () => {
+            this.saveSettings();
         });
     },
 
@@ -69,13 +63,13 @@ const SettingsTab = {
         const settings = StorageManager.getSettings();
 
         // Set form values
-        this.themeSelect.value = settings.theme || 'light';
-        this.fontSizeSelect.value = settings.fontSize || '16';
+        this.themeSelect.value = 'dark';
+        this.fontSizeSelect.value = '16';
         this.autoSaveToggle.checked = settings.autoSave || false;
 
         // Apply settings
-        document.documentElement.setAttribute('data-theme', settings.theme || 'light');
-        document.documentElement.style.fontSize = (settings.fontSize || '16') + 'px';
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.documentElement.style.fontSize = '16px';
     },
 
     /**
@@ -83,8 +77,8 @@ const SettingsTab = {
      */
     saveSettings() {
         const settings = {
-            theme: this.themeSelect.value,
-            fontSize: this.fontSizeSelect.value,
+            theme: 'dark',
+            fontSize: '16',
             autoSave: this.autoSaveToggle.checked
         };
 
@@ -101,7 +95,7 @@ const SettingsTab = {
      */
     resetSettings() {
         const defaultSettings = {
-            theme: 'light',
+            theme: 'dark',
             fontSize: '16',
             autoSave: false
         };

@@ -30,8 +30,8 @@
 
 .option {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 16px;
 }
 
@@ -52,15 +52,29 @@
     width: 150px;
 }
 
+.option select:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
 .option select:focus {
     outline: none;
     border-color: var(--neon-cyan);
     box-shadow: 0 0 6px rgba(0, 212, 255, 0.5);
 }
 
+.setting-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 /* Toggle switch styles */
 .switch-option {
-    margin-bottom: 0;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .switch {

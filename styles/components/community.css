@@ -283,10 +283,10 @@
 /* Community search input */
 #communitySearchInput {
     flex: 1;
-    padding: 8px 12px;
+    padding: 9px 12px;
     border-radius: 4px;
     font-size: 14px;
-    background: var(--metal-grey);
+    background: rgba(0, 0, 0, 0.65);
     border: 1px solid rgba(0, 212, 255, 0.3);
     color: var(--text-light);
 }
@@ -297,18 +297,72 @@
     box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
 }
 
-/* Rating Styles */
-.rating {
-    color: var(--neon-lime);
-    margin-left: 8px;
+#communitySearchInput::placeholder {
+    color: var(--text-muted);
 }
 
+/* Update the search container to match My Prompts tab */
 #communityTab .search-sort-container {
     padding: 16px 16px 8px 16px;
     margin-bottom: 8px;
     display: flex;
     justify-content: flex-start;
-    align-items: center;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.filter-wrapper {
+    margin-left: 8px;
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+}
+
+.filter-select {
+    padding: 9px 12px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: var(--text-light);
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 150px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 36px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+}
+
+/* Responsive search and filter layout */
+@media (max-width: 600px) {
+    #communitySearchContainer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-wrapper {
+        margin-left: 0;
+        margin-top: 8px;
+    }
+
+    .filter-select {
+        width: 100%;
+    }
+}
+
+/* Rating Styles */
+.rating {
+    color: var(--neon-lime);
+    margin-left: 8px;
 }
 
 /* Empty state */
